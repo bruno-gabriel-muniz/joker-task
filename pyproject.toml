@@ -1,5 +1,5 @@
 [project]
-name = "jokertask"
+name = "joker_task"
 version = "0.1.0"
 description = ""
 authors = [
@@ -37,9 +37,9 @@ addopts = '-p no:warnings'
 lint = 'ruff check'
 pre_format = 'ruff check --fix'
 format = 'ruff format'
-run = 'fastapi dev jokertask/app.py'
+run = 'fastapi dev joker_task/app.py'
 pre_test = 'task lint'
-test = 'pytest -s -x --cov=jokertask -vv'
+test = 'pytest -s -x --cov=joker_task -vv'
 post_test = 'coverage html'
 
 [build-system]
