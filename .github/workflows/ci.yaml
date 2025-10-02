@@ -5,6 +5,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
     steps:
       - name: Instalar o python
         uses: actions/setup-python@v5
