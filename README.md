@@ -20,28 +20,48 @@ O joker-task visa ser um gerenciador de tarefas o mais versátil e simples poss�
 ```
 .
 ├── joker_task
-│   ├── hello_world.py
+│   ├── app.py
+│   ├── database.py
 │   ├── __init__.py
-│   ├── joker_task.py
+│   ├── models.py
+│   ├── router
+│   │   └── auth.py
 │   ├── schemas.py
+│   ├── service
+│   │   └── security.py
+│   └── setings.py
 ├── LICENSE
+├── migrations
+│   ├── env.py
+│   ├── README
+│   ├── script.py.mako
+│   └── versions
+│       └── ...
 ├── poetry.lock
 ├── pyproject.toml
 ├── README.md
 └── tests
     ├── conftest.py
     ├── __init__.py
-    └── test_hello_world.py
+    ├── test_auth.py
+    ├── test_hello_world.py
+    └── test_security.py
 
 ```
 
 ## Arquitetura Inicial
 
-<img src="https://i.ibb.co/prjcb5XT/Joker-Task.jpg" alt="Joker-Task" border="0">
+<img src="https://i.ibb.co/0y9mdsp8/Joker-Task.jpg" alt="Joker-Task" border="0">
 
-- Security → autenticação/autorização
-- Manager DB → manipulação de dados no banco
-- Manager RSP → aplicação de filtros e resposta formatada para o usuário
+- auth → autenticação/autorização
+- security → executa tarefas de autenticação
+- manager_task → gerencia as tarefas e os workbenchs  
+- manager_db → manipulação de dados no banco
+- manager_rsp → aplicação de filtros e resposta formatada para o usuário
+
+Cascata de chamadas:
+- User -> auth -> security
+- User -> manager_task -> (manager_db, manager_rsp)
 
 ## Próximos Passos
 
