@@ -4,10 +4,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy import StaticPool
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
+from joker_task.app import app
 from joker_task.database import get_session
-from joker_task.joker_task import app
-from joker_task.models.models import User, table_registry
-from joker_task.security.security import get_hash_password
+from joker_task.models import User, table_registry
+from joker_task.service.security import get_hash_password
 
 
 @pytest.fixture
@@ -47,11 +47,7 @@ async def users(session) -> list[dict[str, str]]:
             'username': 'alice',
             'password': 'secret',
         },
-        {
-            'email': 'bob@example.com',
-            'username': 'bob',
-            'password': 'secret'
-        },
+        {'email': 'bob@example.com', 'username': 'bob', 'password': 'secret'},
     ]
 
     user0 = User(
