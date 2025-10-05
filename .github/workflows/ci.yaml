@@ -7,6 +7,9 @@ jobs:
 
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      ACCESS_TOKEN_EXPIRE: ${{ secrets.ACCESS_TOKEN_EXPIRE }}
+      ALGORITHM: ${{ secrets.ALGORITHM }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
 
     steps:
       - name: Instalar o python
