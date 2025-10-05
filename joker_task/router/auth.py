@@ -2,16 +2,21 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from joker_task.database import get_session
 from joker_task.models import User
-from joker_task.schemas import UserPublic, UserSchema
-from joker_task.service.security import get_hash_password
+from joker_task.schemas import Token, UserPublic, UserSchema
+from joker_task.service.security import (
+    generate_access_token,
+    get_hash_password,
+    verify_password,
+)
 
 T_Session = Annotated[AsyncSession, Depends(get_session)]
-
+T_OAuth2PRF = Annotated[OAuth2PasswordRequestForm, Depends()]
 
 auth = APIRouter(prefix='', tags=['auth'])
 
@@ -36,3 +41,18 @@ async def create_user(user: UserSchema, session: T_Session):
     await session.refresh(user_db)
 
     return user_db
+
+
+@auth.post('/token/', response_model=Token, status_code=HTTPStatus.OK)
+async def get_access_token(form_data: T_OAuth2PRF, session: T_Session):
+    user_db = await session.scalar(
+        select(User).where(User.email == form_data.username)
+    )
+    if user_db is None or not verify_password(
+        form_data.password, user_db.password
+    ):
+        raise HTTPException(
+            HTTPStatus.UNAUTHORIZED, detail='incorrect email or password'
+        )
+
+    return {'token': generate_access_token({'sub': user_db.email})}

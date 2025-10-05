@@ -12,3 +12,7 @@ class UserPublic(BaseModel):
 
 class UserSchema(UserPublic):
     password: str
+
+
+class Token(BaseModel):
+    token: str

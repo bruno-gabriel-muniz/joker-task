@@ -8,6 +8,7 @@ from joker_task.app import app
 from joker_task.database import get_session
 from joker_task.models import User, table_registry
 from joker_task.service.security import get_hash_password
+from joker_task.settings import Settings
 
 
 @pytest.fixture
@@ -66,3 +67,8 @@ async def users(session) -> list[dict[str, str]]:
     await session.commit()
 
     return users
+
+
+@pytest.fixture
+def settings() -> Settings:
+    return Settings()  # type: ignore

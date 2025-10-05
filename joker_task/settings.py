@@ -6,3 +6,6 @@ class Settings(BaseSettings):
         env_file='joker_task/.env', env_file_encoding='utf-8'
     )
     DATABASE_URL: str
+    ALGORITHM: str
+    SECRET_KEY: str
+    ACCESS_TOKEN_EXPIRE: int

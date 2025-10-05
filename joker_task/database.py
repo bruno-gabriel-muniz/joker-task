@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
-from joker_task.setings import Settings
+from joker_task.settings import Settings
 
 engine = create_async_engine(Settings().DATABASE_URL)  # type: ignore
 
