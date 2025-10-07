@@ -5,6 +5,11 @@ class Message(BaseModel):
     message: str
 
 
+class UserUpdate(BaseModel):
+    username: str
+    password: str
+
+
 class UserPublic(BaseModel):
     email: EmailStr
     username: str

@@ -1,3 +1,4 @@
+# import ipdb
 from http import HTTPStatus
 
 from fastapi.testclient import TestClient
@@ -77,3 +78,32 @@ def test_get_access_token_unauthorized(client: TestClient, users):
     data = rsp.json()
 
     assert data['detail'] == 'incorrect email or password'
+
+
+def test_update_user(client: TestClient, users):
+    rsp = client.put(
+        '/update_user/',
+        json={'username': 'alice2', 'password': 'secret'},
+        headers={'Authorization': f'bearer {users[0]["token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = rsp.json()
+
+    assert data['username'] == 'alice2'
+    assert 'password' not in data
+
+
+def test_update_user_conflict(client: TestClient, users):
+    rsp = client.put(
+        '/update_user/',
+        json={'username': 'alice', 'password': 'euSouOBob'},
+        headers={'Authorization': f'bearer {users[1]["token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.CONFLICT
+
+    data = rsp.json()
+
+    assert data['detail'] == 'username is already in use'

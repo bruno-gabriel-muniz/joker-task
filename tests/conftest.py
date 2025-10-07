@@ -7,7 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from joker_task.app import app
 from joker_task.database import get_session
 from joker_task.models import User, table_registry
-from joker_task.service.security import get_hash_password
+from joker_task.service.security import (
+    generate_access_token,
+    get_hash_password,
+)
 from joker_task.settings import Settings
 
 
@@ -47,8 +50,14 @@ async def users(session) -> list[dict[str, str]]:
             'email': 'alice@example.com',
             'username': 'alice',
             'password': 'secret',
+            'token': generate_access_token({'sub': 'alice@example.com'}),
         },
-        {'email': 'bob@example.com', 'username': 'bob', 'password': 'secret'},
+        {
+            'email': 'bob@example.com',
+            'username': 'bob',
+            'password': 'secret',
+            'token': generate_access_token({'sub': 'bob@example.com'}),
+        },
     ]
 
     user0 = User(

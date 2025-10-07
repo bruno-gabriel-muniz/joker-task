@@ -65,7 +65,7 @@ Cascata de chamadas:
 
 ## Próximos Passos
 
-- [ ] Sistema de Login;
+- [X] Sistema de Login;
 - [ ] Desenvolvimento dos tipos de Task através de TDD;
 - [ ] Integração com os WorkBenchs, também com TDD; e
 - [ ] Refatorações.
