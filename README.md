@@ -2,9 +2,25 @@
 ![Build](https://github.com/bruno-gabriel-muniz/joker-task/actions/workflows/ci.yaml/badge.svg)
 [![codecov](https://codecov.io/gh/bruno-gabriel-muniz/joker-task/branch/main/graph/badge.svg)](https://codecov.io/gh/bruno-gabriel-muniz/joker-task)
 
-# joker-task
+<img src="https://i.ibb.co/wZb6qrnZ/Joker-Task-Editado.png" alt="Joker-Task-Editado" border="0">
 
-O joker-task visa ser um gerenciador de tarefas o mais versátil e simples possível, além de servir de caso de estudo para o uso de boas práticas de programação.
+O joker-task é uma API de gerenciamento de tarefas em desenvolvimento que busca ser apenas o espaço em branco entre você e a conclusão das suas tarefas. Ou seja, um sistema de organização que não é trabalhoso e nem difícil de se manter a longo prazo.
+
+Para isso, eu organizei o sistema de tarefas em apenas três pontos principais além dos usuários:
+
+- Tasks: um único tipo de tarefa que pode ter qualquer técnica de gerenciamento, seja lembretes, colunas de quadro kanban, trakers ou nenhum;
+- Workbenches: zonas que facilitam a visualização recorrente de determinado tipo de tarefa;
+- Views: filtros que coletam determinadas tarefas.
+
+<!--(Futuramente: Imagem explicativa)-->
+
+Até agora o sistema conta apenas com o sistema de autenticação, mas a ideia é que ele cresça com o tempo e se torne um sistema robusto e flexível.
+
+## Sumário
+- [Tecnologias Utilizadas](#tecnologias-utilizadas)
+- [Estrutura do Projeto](#estrutura-do-projeto)
+- [Arquitetura Inicial](#arquitetura-inicial)
+- [Próximos Passos](#próximos-passos)
 
 ## Tecnologias Utilizadas
 
@@ -55,7 +71,7 @@ O joker-task visa ser um gerenciador de tarefas o mais versátil e simples poss�
 
 - auth → autenticação/autorização
 - security → executa tarefas de autenticação
-- manager_task → gerencia as tarefas e os workbenchs  
+- manager_task → gerencia as tarefas e os workbenches
 - manager_db → manipulação de dados no banco
 - manager_rsp → aplicação de filtros e resposta formatada para o usuário
 
@@ -67,5 +83,5 @@ Cascata de chamadas:
 
 - [X] Sistema de Login;
 - [ ] Desenvolvimento dos tipos de Task através de TDD;
-- [ ] Integração com os WorkBenchs, também com TDD; e
+- [ ] Integração com os workbenches, também com TDD; e
 - [ ] Refatorações.
