@@ -5,8 +5,8 @@ from sqlalchemy import StaticPool
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from joker_task.app import app
-from joker_task.database.database import get_session
-from joker_task.database.models import User, table_registry
+from joker_task.db.database import get_session
+from joker_task.db.models import User, table_registry
 from joker_task.service.security import (
     generate_access_token,
     get_hash_password,
