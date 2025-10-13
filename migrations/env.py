@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy import pool
 
 from joker_task.settings import Settings
-from joker_task.models import table_registry
+from joker_task.database.models import table_registry
 
 
 # this is the Alembic Config object, which provides

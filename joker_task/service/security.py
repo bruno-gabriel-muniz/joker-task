@@ -10,8 +10,8 @@ from pwdlib import PasswordHash
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from joker_task.database import get_session
-from joker_task.models import User
+from joker_task.database.database import get_session
+from joker_task.database.models import User
 from joker_task.settings import Settings
 
 pwd_context = PasswordHash.recommended()
