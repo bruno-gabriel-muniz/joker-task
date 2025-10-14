@@ -1,7 +1,15 @@
 from datetime import datetime
-from typing import List
+from typing import List, Literal
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, registry, relationship
 
 table_registry = registry()
@@ -35,19 +43,24 @@ class Task:
     __tablename__ = 'tasks'
 
     id_task: Mapped[int] = mapped_column(
-        Integer, primary_key=True, autoincrement=True
+        Integer, primary_key=True, init=False, autoincrement=True
     )
     user_email: Mapped[str] = mapped_column(ForeignKey('users.email'))
     user: Mapped['User'] = relationship(back_populates='tasks')
 
-    done: Mapped[bool] = mapped_column(Boolean, nullable=True)
-    tag: Mapped[str] = mapped_column(String, nullable=True)
-    reminder: Mapped[datetime] = mapped_column(DateTime, nullable=True)
-    repetition: Mapped[str] = mapped_column(
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    done: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    tags: Mapped[List[str] | None] = mapped_column(
+        JSON, nullable=True
+    )  # reformular
+    reminder: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    repetition: Mapped[str | None] = mapped_column(
         String, nullable=True
     )  # Implementação Temporária
-    state: Mapped[str] = mapped_column(String, nullable=True)  # Kanban
-    priority: Mapped[int] = mapped_column(Integer, default=100)
+    state: Mapped[str | None] = mapped_column(String, nullable=True)  # Kanban
+    priority: Mapped[int | Literal[100]] = mapped_column(Integer, default=100)
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,

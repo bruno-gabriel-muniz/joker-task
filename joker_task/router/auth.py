@@ -20,10 +20,12 @@ T_Session = Annotated[AsyncSession, Depends(get_session)]
 T_OAuth2PRF = Annotated[OAuth2PasswordRequestForm, Depends()]
 T_User = Annotated[User, Depends(get_user)]
 
-auth = APIRouter(prefix='', tags=['auth'])
+auth_router = APIRouter(prefix='', tags=['auth'])
 
 
-@auth.post('/users/', response_model=UserPublic, status_code=HTTPStatus.OK)
+@auth_router.post(
+    '/users/', response_model=UserPublic, status_code=HTTPStatus.OK
+)
 async def create_user(user: UserSchema, session: T_Session):
     exist_conflict = await session.scalar(
         select(User).where(
@@ -45,7 +47,7 @@ async def create_user(user: UserSchema, session: T_Session):
     return user_db
 
 
-@auth.post('/token/', response_model=Token, status_code=HTTPStatus.OK)
+@auth_router.post('/token/', response_model=Token, status_code=HTTPStatus.OK)
 async def get_access_token(form_data: T_OAuth2PRF, session: T_Session):
     user_db = await session.scalar(
         select(User).where(User.email == form_data.username)
@@ -60,7 +62,7 @@ async def get_access_token(form_data: T_OAuth2PRF, session: T_Session):
     return {'token': generate_access_token({'sub': user_db.email})}
 
 
-@auth.put(
+@auth_router.put(
     '/update_user/', response_model=UserPublic, status_code=HTTPStatus.OK
 )
 async def update_user(
