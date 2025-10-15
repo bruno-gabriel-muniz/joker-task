@@ -84,7 +84,7 @@ def test_update_user(client: TestClient, users):
     rsp = client.put(
         '/update_user/',
         json={'username': 'alice2', 'password': 'secret'},
-        headers={'Authorization': f'bearer {users[0]["token"]}'},
+        headers={'Authorization': f'Bearer {users[0]["token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -99,7 +99,7 @@ def test_update_user_conflict(client: TestClient, users):
     rsp = client.put(
         '/update_user/',
         json={'username': 'alice', 'password': 'euSouOBob'},
-        headers={'Authorization': f'bearer {users[1]["token"]}'},
+        headers={'Authorization': f'Bearer {users[1]["token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.CONFLICT
