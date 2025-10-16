@@ -35,33 +35,41 @@ Até agora o sistema conta apenas com o sistema de autenticação, mas a ideia �
 
 ```
 .
+├── .github
+│   └── workflows
+│       └── ci.yaml
 ├── joker_task
-│   ├── app.py
-│   ├── database.py
-│   ├── __init__.py
-│   ├── models.py
+│   ├── db
+│   │   ├── database.py
+│   │   └── models.py
 │   ├── router
-│   │   └── auth.py
-│   ├── schemas.py
+│   │   ├── auth.py
+│   │   └── tasks.py
 │   ├── service
 │   │   └── security.py
-│   └── setings.py
-├── LICENSE
+│   ├── __init__.py
+│   ├── app.py
+│   ├── schemas.py
+│   └── settings.py
 ├── migrations
 │   ├── env.py
 │   ├── README
 │   ├── script.py.mako
 │   └── versions
-│       └── ...
+│       └─── ...
+├── tests
+│   ├── conftest.py
+│   ├── __init__.py
+│   ├── test_auth.py
+│   ├── test_hello_world.py
+│   ├── test_security.py
+│   └── test_tasks.py
+├── .gitignore
+├── LICENSE
 ├── poetry.lock
 ├── pyproject.toml
-├── README.md
-└── tests
-    ├── conftest.py
-    ├── __init__.py
-    ├── test_auth.py
-    ├── test_hello_world.py
-    └── test_security.py
+└── README.md
+
 
 ```
 
@@ -82,6 +90,7 @@ Cascata de chamadas:
 ## Próximos Passos
 
 - [X] Sistema de Login;
+- [ ] Sistema de Logs;
 - [ ] Desenvolvimento dos tipos de Task através de TDD;
 - [ ] Integração com os workbenches, também com TDD; e
 - [ ] Refatorações.
