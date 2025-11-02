@@ -14,7 +14,8 @@ dependencies = [
     "sqlalchemy[asyncio] (>=2.0.43,<3.0.0)",
     "alembic (>=1.16.5,<2.0.0)",
     "pydantic-settings (>=2.11.0,<3.0.0)",
-    "aiosqlite (>=0.21.0,<0.22.0)"
+    "aiosqlite (>=0.21.0,<0.22.0)",
+    "loguru (>=0.7.3,<0.8.0)"
 ]
 
 [tool.poetry.group.dev.dependencies]

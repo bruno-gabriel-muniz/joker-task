@@ -2,6 +2,7 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
+from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from joker_task.db.database import get_session
@@ -19,6 +20,7 @@ tasks_router = APIRouter(prefix='/tasks', tags=['tasks'])
     '/', response_model=TaskPublic, status_code=HTTPStatus.CREATED
 )
 async def create_task(task: TaskSchema, session: T_Session, user: T_User):
+    logger.info('creating the new task')
     task_db = Task(
         user_email=user.email,
         user=user,
@@ -32,8 +34,10 @@ async def create_task(task: TaskSchema, session: T_Session, user: T_User):
         priority=task.priority,
     )
 
+    logger.info('saving the task to the db')
     session.add(task_db)
     await session.commit()
     await session.refresh(task_db)
 
+    logger.info('returning the task')
     return task_db

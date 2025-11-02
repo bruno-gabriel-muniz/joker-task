@@ -74,8 +74,6 @@ def test_created_at_task(client, users):
 
     data = rsp.json()
 
-    print(data['created_at'])
-
     assert time_str.startswith(data['created_at'])
 
 
