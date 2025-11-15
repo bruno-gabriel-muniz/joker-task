@@ -54,7 +54,7 @@ def test_get_access_token(client: TestClient, users, settings):
     assert rsp.status_code == HTTPStatus.OK
 
     data: dict = decode(
-        rsp.json()['token'], settings.SECRET_KEY, settings.ALGORITHM
+        rsp.json()['access_token'], settings.SECRET_KEY, settings.ALGORITHM
     )
 
     assert 'exp' in data
@@ -84,7 +84,7 @@ def test_update_user(client: TestClient, users):
     rsp = client.put(
         '/update_user/',
         json={'username': 'alice2', 'password': 'secret'},
-        headers={'Authorization': f'Bearer {users[0]["token"]}'},
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -99,7 +99,7 @@ def test_update_user_conflict(client: TestClient, users):
     rsp = client.put(
         '/update_user/',
         json={'username': 'alice', 'password': 'euSouOBob'},
-        headers={'Authorization': f'Bearer {users[1]["token"]}'},
+        headers={'Authorization': f'Bearer {users[1]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.CONFLICT

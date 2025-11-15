@@ -67,7 +67,7 @@ async def get_access_token(form_data: T_OAuth2PRF, session: T_Session):
         )
 
     logger.info('returnig the token')
-    return {'token': generate_access_token({'sub': user_db.email})}
+    return {'access_token': generate_access_token({'sub': user_db.email})}
 
 
 @auth_router.put(

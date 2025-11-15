@@ -75,22 +75,21 @@ Até agora o sistema conta apenas com o sistema de autenticação, mas a ideia �
 
 ## Arquitetura Inicial
 
-<img src="https://i.ibb.co/0y9mdsp8/Joker-Task.jpg" alt="Joker-Task" border="0">
+<img src="https://i.ibb.co/NgYJvRmF/Screenshot-2025-11-15-12-04-16.png" alt="Screenshot-2025-11-15-12-04-16" border="0">
 
 - auth → autenticação/autorização
 - security → executa tarefas de autenticação
-- manager_task → gerencia as tarefas e os workbenches
-- manager_db → manipulação de dados no banco
-- manager_rsp → aplicação de filtros e resposta formatada para o usuário
+- tasks → gerencia as tarefas e os workbenches
+- task_collector → busca e coleta as tasks conforme os filtros
 
 Cascata de chamadas:
 - User -> auth -> security
-- User -> manager_task -> (manager_db, manager_rsp)
+- User -> tasks -> task_collector
 
 ## Próximos Passos
 
 - [X] Sistema de Login;
 - [X] Sistema de Logs;
-- [ ] Desenvolvimento dos tipos de Task através de TDD;
+- [ ] Desenvolvimento do CRUD de Task através de TDD;
 - [ ] Integração com os workbenches, também com TDD; e
 - [ ] Refatorações.

@@ -18,7 +18,7 @@ from joker_task.settings import Settings
 pwd_context = PasswordHash.recommended()
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/token/')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
 
 T_Session = Annotated[AsyncSession, Depends(get_session)]
 T_OAuth2PB = Annotated[str, Depends(oauth2_scheme)]

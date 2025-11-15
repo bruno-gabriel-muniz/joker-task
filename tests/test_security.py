@@ -35,7 +35,7 @@ def test_get_user_token_expired(client: TestClient, users):
         rsp = client.put(
             '/update_user/',
             json={'username': 'bob', 'password': 'secret'},
-            headers={'Authorization': f'bearer {users[1]["token"]}'},
+            headers={'Authorization': f'bearer {users[1]["access_token"]}'},
         )
 
     assert rsp.status_code == HTTPStatus.UNAUTHORIZED
