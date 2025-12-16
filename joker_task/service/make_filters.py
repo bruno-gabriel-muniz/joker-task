@@ -65,9 +65,7 @@ class FilterLogicListInList(StrategyMakeFilterInterface):
     @staticmethod
     def make(cur_filter: Select, values: list[Any], campo: str) -> Select:
         for value in values:
-            cur_filter = cur_filter.where(
-                getattr(Task, campo).contains(value)
-            )
+            cur_filter = cur_filter.where(getattr(Task, campo).contains(value))
         return cur_filter
 
 
