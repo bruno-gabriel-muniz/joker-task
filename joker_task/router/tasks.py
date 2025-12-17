@@ -76,7 +76,7 @@ async def get_tasks_by_filters(
 @tasks_router.patch(
     '/{id}', response_model=TaskPublic, status_code=HTTPStatus.OK
 )
-async def update_tasks(
+async def update_task(
     id: int,
     task: TaskSchema,
     user: T_User,
@@ -93,3 +93,13 @@ async def update_tasks(
     await session.refresh(task_db)
 
     return task_db
+
+
+@tasks_router.delete('/{id}', status_code=HTTPStatus.NO_CONTENT)
+async def delete_task(
+    id: int, user: T_User, session: T_Session, collector: T_CollectorTask
+):
+    task_db = await collector.collect_task_by_id(user, id)
+
+    await session.delete(task_db)
+    await session.commit()

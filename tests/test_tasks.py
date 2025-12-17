@@ -118,7 +118,7 @@ def test_get_task_by_id(client: TestClient, users, tasks):
 async def test_update_task(
     client: TestClient, users, tasks, session: AsyncSession
 ):
-    id_test = 4
+    id_test = 1
     new_data = {
         'title': f'Tarefa {id_test} atualizada',
         'description': 'Descrição atualizada',
@@ -131,9 +131,9 @@ async def test_update_task(
     }
 
     rsp = client.patch(
-        '/tasks/4',
+        f'/tasks/{id_test}',
         json=new_data,
-        headers={'Authorization': f'bearer {users[1]["access_token"]}'},
+        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
     )
     assert rsp.status_code == HTTPStatus.OK
 
@@ -156,3 +156,19 @@ async def test_update_task(
     assert task_assert.tags == new_data['tags']
     assert task_assert.state == new_data['state']
     assert task_assert.priority == new_data['priority']
+
+
+@pytest.mark.asyncio
+async def test_delete_task(
+    client: TestClient, session: AsyncSession, users, tasks
+):
+    rsp = client.delete(
+        '/tasks/1',
+        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NO_CONTENT
+
+    is_none = await session.scalar(select(Task).where(Task.id_task == 1))
+
+    assert is_none is None
