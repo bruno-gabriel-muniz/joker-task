@@ -83,7 +83,21 @@ def test_created_at_task(client: TestClient, users):
     assert time_str.startswith(data['created_at'][0:17])
 
 
-# TODO: Testar updated_at
+def test_updated_at_task(client: TestClient, users, tasks):
+    time = datetime.now(ZoneInfo('UTC'))
+    with freeze_time(time):
+        rsp = client.patch(
+            '/tasks/4',
+            json={'title': 'Tarefa 4 atualizada'},
+            headers={'Authorization': f'bearer {users[1]["access_token"]}'},
+        )
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = rsp.json()
+
+    assert data['updated_at'] is not None
+    assert data['updated_at'].startswith(time.isoformat()[0:17])
 
 
 def test_get_task_by_id(client: TestClient, users, tasks):
