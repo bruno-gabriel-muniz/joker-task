@@ -71,3 +71,25 @@ async def get_tasks_by_filters(
     tasks = await collector.collect_task_by_filter(user, filter)
 
     return {'responses': tasks}
+
+
+@tasks_router.patch(
+    '/{id}', response_model=TaskPublic, status_code=HTTPStatus.OK
+)
+async def update_tasks(
+    id: int,
+    task: TaskSchema,
+    user: T_User,
+    session: T_Session,
+    collector: T_CollectorTask,
+):
+    task_db = await collector.collect_task_by_id(user, id)
+
+    for key, value in task.model_dump().items():
+        setattr(task_db, key, value)
+    session.add(task_db)
+
+    await session.commit()
+    await session.refresh(task_db)
+
+    return task_db

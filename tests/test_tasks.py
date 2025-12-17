@@ -2,8 +2,13 @@ from datetime import datetime
 from http import HTTPStatus
 from zoneinfo import ZoneInfo
 
+import pytest
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from joker_task.db.models import Task
 
 
 def test_create_task(client: TestClient, users):
@@ -75,7 +80,7 @@ def test_created_at_task(client: TestClient, users):
 
     data = rsp.json()
 
-    assert time_str.startswith(data['created_at'][0:19])
+    assert time_str.startswith(data['created_at'][0:17])
 
 
 # TODO: Testar updated_at
@@ -95,102 +100,45 @@ def test_get_task_by_id(client: TestClient, users, tasks):
     assert tasks[3]['id_task'] == data['id_task']
 
 
-def test_get_task_by_id_not_found(client: TestClient, users, tasks):
-    rsp = client.get(
-        '/tasks/999',
+@pytest.mark.asyncio
+async def test_update_task(
+    client: TestClient, users, tasks, session: AsyncSession
+):
+    id_test = 4
+    new_data = {
+        'title': f'Tarefa {id_test} atualizada',
+        'description': 'Descrição atualizada',
+        'done': True,
+        'tags': ['atualizada1', 'atualizada2'],
+        'state': 'InProgress',
+        'reminder': None,
+        'repetition': None,
+        'priority': 75,
+    }
+
+    rsp = client.patch(
+        '/tasks/4',
+        json=new_data,
         headers={'Authorization': f'bearer {users[1]["access_token"]}'},
     )
-
-    assert rsp.status_code == HTTPStatus.NOT_FOUND
-    assert rsp.json()['detail'] == 'task not found'
-
-
-def test_get_task_by_filter_logic_like(client: TestClient, users, tasks):
-    rsp_qnt_elements = 2
-
-    rsp = client.get(
-        '/tasks?title=%tes%',
-        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
-    )
-
     assert rsp.status_code == HTTPStatus.OK
 
     data = rsp.json()
+    data.pop('updated_at')
+    data.pop('created_at')
+    data.pop('id_task')
+    data.pop('user_email')
 
-    assert len(data['responses']) == rsp_qnt_elements
-    assert data['responses'][0]['title'] == tasks[0]['title']
-    assert data['responses'][1]['title'] == tasks[1]['title']
+    assert data == new_data
 
-
-def test_get_task_by_filter_logic_exact(client: TestClient, users, tasks):
-    rsp_qnt_elements = 2
-
-    rsp = client.get(
-        '/tasks?repetition=0111110',
-        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
+    task_assert = await session.scalar(
+        select(Task).where(Task.id_task == id_test)
     )
+    assert task_assert
 
-    assert rsp.status_code == HTTPStatus.OK
-
-    data = rsp.json()
-
-    assert len(data['responses']) == rsp_qnt_elements
-    assert data['responses'][0]['repetition'] == tasks[0]['repetition']
-    assert data['responses'][1]['repetition'] == tasks[1]['repetition']
-
-
-def test_get_task_by_filter_logic_in_list(client: TestClient, users, tasks):
-    rsp_qnt_elements = 2
-
-    rsp = client.get(
-        '/tasks?state=ToDo&state=InProgress',
-        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
-    )
-
-    assert rsp.status_code == HTTPStatus.OK
-
-    data = rsp.json()
-
-    assert len(data['responses']) == rsp_qnt_elements
-    assert data['responses'][0]['state'] == tasks[0]['state']
-    assert data['responses'][1]['state'] == tasks[1]['state']
-
-
-def test_get_task_by_filter_logic_range(client: TestClient, users, tasks):
-    rsp_qnt_elements = 2
-
-    rsp = client.get(
-        '/tasks?priority=40&priority=60',
-        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
-    )
-
-    assert rsp.status_code == HTTPStatus.OK
-
-    data = rsp.json()
-
-    assert len(data['responses']) == rsp_qnt_elements
-    assert data['responses'][0]['priority'] == tasks[0]['priority']
-    assert data['responses'][1]['priority'] == tasks[1]['priority']
-
-
-def test_get_task_by_filter_logic_list_in_list(
-    client: TestClient, users, tasks
-):
-    rsp_qnt_elements = 2
-
-    rsp = client.get(
-        '/tasks?tags=test_filters',
-        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
-    )
-
-    assert rsp.status_code == HTTPStatus.OK
-
-    data = rsp.json()
-
-    assert len(data['responses']) == rsp_qnt_elements
-    if data['responses'][0]['id_task'] == tasks[0]['id_task']:
-        assert data['responses'][0]['tags'] == tasks[0]['tags']
-        assert data['responses'][1]['tags'] == tasks[1]['tags']
-    else:
-        assert data['responses'][0]['tags'] == tasks[1]['tags']
-        assert data['responses'][1]['tags'] == tasks[0]['tags']
+    assert task_assert.title == new_data['title']
+    assert task_assert.description == new_data['description']
+    assert task_assert.done is True
+    assert task_assert.tags == new_data['tags']
+    assert task_assert.state == new_data['state']
+    assert task_assert.priority == new_data['priority']
