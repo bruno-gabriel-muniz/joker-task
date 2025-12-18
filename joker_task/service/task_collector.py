@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 from fastapi import Depends, HTTPException
+from loguru import logger
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,9 +14,11 @@ from joker_task.service.make_filters import factory_make_filter
 
 class TaskCollector(TaskCollectorInterface):
     def __init__(self, session: AsyncSession = Depends(get_session)):
+        logger.info('starting collector')
         self.session = session
 
     async def collect_task_by_id(self, user: User, id_task: int) -> Task:
+        logger.info(f'collecting task with id = {id_task}')
         task = await self.session.scalar(
             select(Task).where(
                 Task.user_email == user.email, Task.id_task == id_task
@@ -31,8 +34,10 @@ class TaskCollector(TaskCollectorInterface):
         filter_sql = select(Task).where(Task.user_email == user.email)
 
         for campo in filter.model_fields:
+            logger.info(f'making filter of {campo}')
             filter_sql = self._make_filter(campo, filter, filter_sql)
 
+        logger.info('searching tasks')
         result: list[Task] = list(
             (await self.session.scalars(filter_sql)).all()
         )
@@ -46,10 +51,11 @@ class TaskCollector(TaskCollectorInterface):
         if not getattr(filter, campo) or not (
             field_info and field_info.json_schema_extra
         ):
+            logger.info('returning filter_sql unchanged')
             return filter_sql
 
+        logger.info(f'updating filter with {campo}')
         make_filter = factory_make_filter(
             field_info.json_schema_extra.get('search_logic')
         )
-
         return make_filter.make(filter_sql, getattr(filter, campo), campo)

@@ -1,5 +1,6 @@
 from typing import Any
 
+from loguru import logger
 from sqlalchemy import Select
 
 from joker_task.db.models import Task
@@ -23,9 +24,11 @@ def factory_make_filter(type: Any) -> StrategyMakeFilterInterface:
     }
 
     if not isinstance(type, str):
+        logger.warning(f"type isn't str: {type}")
         raise TypeError('the arg type has be a str')
 
     if type not in dict_type_strategy:
+        logger.warning(f'type unknown: {type}')
         raise ValueError('value not found in dict_type_strategy')
 
     return dict_type_strategy[type]()

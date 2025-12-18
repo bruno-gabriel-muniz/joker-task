@@ -85,8 +85,11 @@ async def update_task(
 ):
     task_db = await collector.collect_task_by_id(user, id)
 
+    logger.info(f'updating task with id = {id}')
     for key, value in task.model_dump().items():
         setattr(task_db, key, value)
+
+    logger.info('updating db')
     session.add(task_db)
 
     await session.commit()
@@ -101,5 +104,6 @@ async def delete_task(
 ):
     task_db = await collector.collect_task_by_id(user, id)
 
+    logger.info(f'deleting task with id  = {id}')
     await session.delete(task_db)
     await session.commit()
