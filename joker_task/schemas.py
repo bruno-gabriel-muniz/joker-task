@@ -1,10 +1,12 @@
 from datetime import datetime
-from typing import Literal
+from typing import Literal, Sequence
 
 from pydantic import BaseModel, EmailStr, Field
 
+from joker_task.db.models import Tag
+
 LOGIC_LIKE = 'LIKE'
-LOGIC_LIST_IN_LIST = 'LIST_IN_LIST'
+LOGIC_WITH_TAGS = 'WITH_TAGS'
 LOGIC_IN_LIST = 'IN_LIST'
 LOGIC_EXACT = 'EXACT'
 LOGIC_RANGE = 'RANGE'
@@ -33,11 +35,15 @@ class Token(BaseModel):
     token_type: str = 'bearer'
 
 
+class TagInTask(BaseModel):
+    name: str
+
+
 class TaskSchema(BaseModel):
     title: str
     description: str | None = None
     done: bool | None = None
-    tags: list[str] | None = None
+    tags: Sequence[str | Tag] | None = []
     reminder: datetime | None = None
     repetition: str | None = None
     state: str | None = None
@@ -67,7 +73,7 @@ class Filter(FilterPage):
         default=None, json_schema_extra={'search_logic': LOGIC_EXACT}
     )
     tags: list[str] | None = Field(
-        default=None, json_schema_extra={'search_logic': LOGIC_LIST_IN_LIST}
+        default=None, json_schema_extra={'search_logic': LOGIC_WITH_TAGS}
     )
     reminder: tuple[datetime | None, datetime | None] | None = Field(
         default=None, json_schema_extra={'search_logic': LOGIC_RANGE}

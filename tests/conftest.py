@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from joker_task.app import app
 from joker_task.db.database import get_session
-from joker_task.db.models import Task, User, table_registry
+from joker_task.db.models import Tag, Task, User, table_registry
 from joker_task.service.security import (
     generate_access_token,
     get_hash_password,
@@ -84,6 +84,17 @@ async def users(session) -> list[dict[str, str]]:
 
 @pytest_asyncio.fixture
 async def tasks(session: AsyncSession, users) -> list[dict[str, Any]]:
+    users_in_db = (
+        await session.scalars(select(User).order_by(User.email))
+    ).all()
+
+    tag_test_filters = Tag('test_filters', users[0]['email'], users_in_db[0])
+
+    tag_test_none = Tag('test_none', users[0]['email'], users_in_db[0])
+
+    session.add(tag_test_filters)
+    session.add(tag_test_none)
+
     list_task = [
         {
             'id_task': 1,
@@ -91,7 +102,7 @@ async def tasks(session: AsyncSession, users) -> list[dict[str, Any]]:
             'title': 'test',
             'description': 'this is a test',
             'done': 0,
-            'tags': ['test_filters', 'test_none'],
+            'tags': [tag_test_filters, tag_test_none],
             'repetition': '0111110',
             'state': 'InProgress',
             'priority': 50,
@@ -101,7 +112,7 @@ async def tasks(session: AsyncSession, users) -> list[dict[str, Any]]:
             'user_email': users[0]['email'],
             'title': 'a other test',
             'done': 0,
-            'tags': ['test_filters'],
+            'tags': [tag_test_filters],
             'repetition': '0111110',
             'state': 'ToDo',
             'priority': 60,
@@ -111,7 +122,7 @@ async def tasks(session: AsyncSession, users) -> list[dict[str, Any]]:
             'user_email': users[0]['email'],
             'title': 'title',
             'done': 0,
-            'tags': ['test_none'],
+            'tags': [tag_test_none],
             'repetition': '1000001',
             'state': 'Done',
             'priority': 100,
@@ -125,10 +136,6 @@ async def tasks(session: AsyncSession, users) -> list[dict[str, Any]]:
             'priority': 55,
         },
     ]
-
-    users_in_db = (
-        await session.scalars(select(User).order_by(User.email))
-    ).all()
 
     task1 = Task(
         user_email=list_task[0]['user_email'],
@@ -175,7 +182,7 @@ async def tasks(session: AsyncSession, users) -> list[dict[str, Any]]:
         priority=list_task[3]['priority'],
         reminder=None,
         repetition=None,
-        tags=None,
+        tags=[],
         description=None,
     )
 

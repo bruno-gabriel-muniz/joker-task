@@ -1,16 +1,16 @@
 from typing import Any
 
 from loguru import logger
-from sqlalchemy import Select
+from sqlalchemy import Select, func
 
-from joker_task.db.models import Task
+from joker_task.db.models import Tag, Task, task_tag
 from joker_task.interfaces.interfaces import StrategyMakeFilterInterface
 from joker_task.schemas import (
     LOGIC_EXACT,
     LOGIC_IN_LIST,
     LOGIC_LIKE,
-    LOGIC_LIST_IN_LIST,
     LOGIC_RANGE,
+    LOGIC_WITH_TAGS,
 )
 
 
@@ -19,8 +19,8 @@ def factory_make_filter(type: Any) -> StrategyMakeFilterInterface:
         LOGIC_EXACT: FilterLogicExact,
         LOGIC_IN_LIST: FilterLogicInList,
         LOGIC_LIKE: FilterLogicLike,
-        LOGIC_LIST_IN_LIST: FilterLogicListInList,
         LOGIC_RANGE: FilterLogicRange,
+        LOGIC_WITH_TAGS: FilterWithTags,
     }
 
     if not isinstance(type, str):
@@ -61,15 +61,19 @@ class FilterLogicLike(StrategyMakeFilterInterface):
         return cur_filter.where(getattr(Task, campo).like(values))
 
 
-class FilterLogicListInList(StrategyMakeFilterInterface):
+class FilterWithTags(StrategyMakeFilterInterface):
     def __init__(self):
         pass
 
     @staticmethod
-    def make(cur_filter: Select, values: list[Any], campo: str) -> Select:
-        for value in values:
-            cur_filter = cur_filter.where(getattr(Task, campo).contains(value))
-        return cur_filter
+    def make(cur_filter: Select, values: list[Any], campo: str = '') -> Select:
+        return (
+            cur_filter.join(task_tag, task_tag.c.id_task == Task.id_task)
+            .join(Tag, Tag.id_tag == task_tag.c.id_tag)
+            .where(Tag.name.in_(values))
+            .group_by(Task.id_task)
+            .having(func.count(func.distinct(Tag.name)) == len(values))
+        )
 
 
 class FilterLogicRange(StrategyMakeFilterInterface):

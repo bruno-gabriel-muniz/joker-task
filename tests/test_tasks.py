@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from freezegun import freeze_time
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from joker_task.db.models import Task
 
@@ -56,7 +57,7 @@ def test_create_full_task(client: TestClient, users):
     assert data['title'] == 'testar o JokerTask'
     assert data['description'] == 'testando agora'
     assert data['done'] is False
-    assert data['tags'] == ['test1', 'test2']
+    assert sorted(data['tags']) == sorted(['test1', 'test2'])
     assert data['reminder'] == reminder.isoformat()
     assert data['repetition'] == '0111110'
     assert data['state'] == 'TODO'
@@ -124,9 +125,7 @@ async def test_update_task(
         'description': 'Descrição atualizada',
         'done': True,
         'tags': ['atualizada1', 'atualizada2'],
-        'state': 'InProgress',
-        'reminder': None,
-        'repetition': None,
+        'repetition': '',
         'priority': 75,
     }
 
@@ -142,19 +141,30 @@ async def test_update_task(
     data.pop('created_at')
     data.pop('id_task')
     data.pop('user_email')
+    data['tags'] = sorted(data['tags'])
+
+    assert data['state'] == 'InProgress'  # value preserved from before
+    assert data['reminder'] is None  # value preserved from before
+
+    data.pop('state')
+    data.pop('reminder')
 
     assert data == new_data
 
     task_assert = await session.scalar(
-        select(Task).where(Task.id_task == id_test)
+        select(Task)
+        .options(selectinload(Task.tags))
+        .where(Task.id_task == id_test)
     )
     assert task_assert
 
     assert task_assert.title == new_data['title']
     assert task_assert.description == new_data['description']
     assert task_assert.done is True
-    assert task_assert.tags == new_data['tags']
-    assert task_assert.state == new_data['state']
+    assert sorted(tag.name for tag in task_assert.tags) == sorted(
+        new_data['tags']
+    )
+    assert task_assert.state == 'InProgress'  # value preserved from before
     assert task_assert.priority == new_data['priority']
 
 

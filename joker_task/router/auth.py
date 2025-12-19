@@ -9,7 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from joker_task.db.database import get_session
 from joker_task.db.models import User
+from joker_task.interfaces.interfaces import MapperInterface
 from joker_task.schemas import Token, UserPublic, UserSchema, UserUpdate
+from joker_task.service.mapper import Mapper
 from joker_task.service.security import (
     generate_access_token,
     get_hash_password,
@@ -20,6 +22,7 @@ from joker_task.service.security import (
 T_Session = Annotated[AsyncSession, Depends(get_session)]
 T_OAuth2PRF = Annotated[OAuth2PasswordRequestForm, Depends()]
 T_User = Annotated[User, Depends(get_user)]
+T_Mapper = Annotated[MapperInterface, Depends(Mapper)]
 
 auth_router = APIRouter(prefix='', tags=['auth'])
 
@@ -27,7 +30,7 @@ auth_router = APIRouter(prefix='', tags=['auth'])
 @auth_router.post(
     '/users/', response_model=UserPublic, status_code=HTTPStatus.OK
 )
-async def create_user(user: UserSchema, session: T_Session):
+async def create_user(user: UserSchema, session: T_Session, mapper: T_Mapper):
     logger.info('checking for conflict')
     exist_conflict = await session.scalar(
         select(User).where(
@@ -49,11 +52,15 @@ async def create_user(user: UserSchema, session: T_Session):
     await session.refresh(user_db)
 
     logger.info('returning the new user')
-    return user_db
+    return mapper.map_user_public(user_db)
 
 
 @auth_router.post('/token/', response_model=Token, status_code=HTTPStatus.OK)
-async def get_access_token(form_data: T_OAuth2PRF, session: T_Session):
+async def get_access_token(
+    form_data: T_OAuth2PRF,
+    session: T_Session,
+    mapper: T_Mapper,
+):
     logger.info('geting user in db')
     user_db = await session.scalar(
         select(User).where(User.email == form_data.username)
@@ -74,7 +81,10 @@ async def get_access_token(form_data: T_OAuth2PRF, session: T_Session):
     '/update_user/', response_model=UserPublic, status_code=HTTPStatus.OK
 )
 async def update_user(
-    user_update: UserUpdate, current_user: T_User, session: T_Session
+    user_update: UserUpdate,
+    current_user: T_User,
+    session: T_Session,
+    mapper: T_Mapper,
 ):
     logger.info('checking conflicts')
     if user_update.username != current_user.username:
@@ -98,4 +108,4 @@ async def update_user(
     await session.refresh(current_user)
 
     logger.info('returning user')
-    return current_user
+    return mapper.map_user_public(current_user)

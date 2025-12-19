@@ -81,9 +81,7 @@ def test_get_task_by_filter_logic_range(client: TestClient, users, tasks):
     assert data['responses'][1]['priority'] == tasks[1]['priority']
 
 
-def test_get_task_by_filter_logic_list_in_list(
-    client: TestClient, users, tasks
-):
+def test_get_task_by_filter_with_tag(client: TestClient, users, tasks):
     rsp_qnt_elements = 2
 
     rsp = client.get(
@@ -97,8 +95,16 @@ def test_get_task_by_filter_logic_list_in_list(
 
     assert len(data['responses']) == rsp_qnt_elements
     if data['responses'][0]['id_task'] == tasks[0]['id_task']:
-        assert data['responses'][0]['tags'] == tasks[0]['tags']
-        assert data['responses'][1]['tags'] == tasks[1]['tags']
+        assert data['responses'][0]['tags'] == [
+            tag.name for tag in tasks[0]['tags']
+        ]
+        assert data['responses'][1]['tags'] == [
+            tag.name for tag in tasks[1]['tags']
+        ]
     else:
-        assert data['responses'][0]['tags'] == tasks[1]['tags']
-        assert data['responses'][1]['tags'] == tasks[0]['tags']
+        assert data['responses'][0]['tags'] == [
+            tag.name for tag in tasks[1]['tags']
+        ]
+        assert data['responses'][1]['tags'] == [
+            tag.name for tag in tasks[0]['tags']
+        ]
