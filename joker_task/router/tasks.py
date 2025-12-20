@@ -110,11 +110,12 @@ async def update_task(  # noqa: PLR0913, PLR0917
 
     task.tags = await tag_controler.get_or_create_tags(user, task.tags)
 
+    logger.info(f'updating task with id = {id}')
+
     if task.tags and task.tags != []:
         task_db.tags = task.tags
         task.tags = None
 
-    logger.info(f'updating task with id = {id}')
     for key, value in task.model_dump(
         exclude_unset=True, exclude_none=True
     ).items():

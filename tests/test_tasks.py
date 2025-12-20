@@ -124,7 +124,7 @@ async def test_update_task(
         'title': f'Tarefa {id_test} atualizada',
         'description': 'Descrição atualizada',
         'done': True,
-        'tags': ['atualizada1', 'atualizada2'],
+        'tags': ['atualizada1', 'atualizada2', 'test_filters'],
         'repetition': '',
         'priority': 75,
     }

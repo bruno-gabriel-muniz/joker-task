@@ -1,6 +1,7 @@
 from typing import Annotated, Sequence
 
 from fastapi import Depends
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,6 +19,8 @@ class TagControler(TagControlerInterface):
     async def get_or_create_tags(
         self, user: User, tag_names: Sequence[str | Tag] | None
     ) -> list[Tag]:
+        logger.info('getting or creating tags')
+
         if not tag_names:
             return []
 
@@ -42,6 +45,9 @@ class TagControler(TagControlerInterface):
 
         if not tag:
             tag = Tag(name=tag_name, user_email=user.email, user=user)
+            logger.info(f'creating new tag: {tag_name}')
             self.session.add(tag)
+        else:
+            logger.info(f'tag found: {tag_name}')
 
         return tag
