@@ -12,7 +12,13 @@ from joker_task.interfaces.interfaces import (
     TagControlerInterface,
     TaskCollectorInterface,
 )
-from joker_task.schemas import Filter, ResponseTasks, TaskPublic, TaskSchema
+from joker_task.schemas import (
+    Filter,
+    ResponseTasks,
+    TaskPublic,
+    TaskSchema,
+    TaskUpdate,
+)
 from joker_task.service.mapper import Mapper
 from joker_task.service.security import get_user
 from joker_task.service.tags_controler import TagControler
@@ -99,7 +105,7 @@ async def get_tasks_by_filters(
 )
 async def update_task(  # noqa: PLR0913, PLR0917
     id: int,
-    task: TaskSchema,
+    task: TaskUpdate,
     user: T_User,
     session: T_Session,
     tag_controler: T_TagControler,
@@ -108,13 +114,12 @@ async def update_task(  # noqa: PLR0913, PLR0917
 ):
     task_db = await collector.collect_task_by_id(user, id)
 
-    task.tags = await tag_controler.get_or_create_tags(user, task.tags)
-
     logger.info(f'updating task with id = {id}')
 
-    if task.tags and task.tags != []:
-        task_db.tags = task.tags
-        task.tags = None
+    await tag_controler.update_tags_of_task(
+        user, task_db, task.tags_add, task.tags_remove
+    )
+    task.tags_add = task.tags_remove = None
 
     for key, value in task.model_dump(
         exclude_unset=True, exclude_none=True

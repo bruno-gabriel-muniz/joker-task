@@ -33,6 +33,16 @@ class TagControlerInterface(ABC):
         pass  # pragma: no cover
 
     @abstractmethod
+    async def update_tags_of_task(
+        self,
+        user: User,
+        task: Task,
+        tags_add: Sequence[str] | None,
+        tags_remove: Sequence[str] | None,
+    ) -> None:
+        pass  # pragma: no cover
+
+    @abstractmethod
     async def _get_or_create_tag(self, user: User, tag_name: str | Tag) -> Tag:
         pass  # pragma: no cover
 

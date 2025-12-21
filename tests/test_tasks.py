@@ -124,6 +124,8 @@ async def test_update_task(
         'title': f'Tarefa {id_test} atualizada',
         'description': 'Descrição atualizada',
         'done': True,
+        'tags_add': ['atualizada1', 'atualizada2'],
+        'tags_remove': ['test_none'],
         'tags': ['atualizada1', 'atualizada2', 'test_filters'],
         'repetition': '',
         'priority': 75,
@@ -148,6 +150,9 @@ async def test_update_task(
 
     data.pop('state')
     data.pop('reminder')
+
+    new_data.pop('tags_add')
+    new_data.pop('tags_remove')
 
     assert data == new_data
 

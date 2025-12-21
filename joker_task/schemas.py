@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, Sequence
+from typing import Sequence
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -47,7 +47,19 @@ class TaskSchema(BaseModel):
     reminder: datetime | None = None
     repetition: str | None = None
     state: str | None = None
-    priority: int | Literal[100] = 100
+    priority: int = 100
+
+
+class TaskUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    done: bool | None = None
+    tags_add: Sequence[str] | None = None
+    tags_remove: Sequence[str] | None = None
+    reminder: datetime | None = None
+    repetition: str | None = None
+    state: str | None = None
+    priority: int = 100
 
 
 class TaskPublic(TaskSchema):

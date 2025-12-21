@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from joker_task.db.database import get_session
-from joker_task.db.models import Tag, User
+from joker_task.db.models import Tag, Task, User
 from joker_task.interfaces.interfaces import TagControlerInterface
 
 T_Session = Annotated[AsyncSession, Depends(get_session)]
@@ -32,6 +32,23 @@ class TagControler(TagControlerInterface):
         ]
 
         return result
+
+    async def update_tags_of_task(
+        self,
+        user: User,
+        task: Task,
+        tags_add: Sequence[str] | None,
+        tags_remove: Sequence[str] | None,
+    ) -> None:
+        current_tags = {tag.name for tag in task.tags}
+
+        if tags_add:
+            current_tags.update(tags_add)
+
+        if tags_remove:
+            current_tags.difference_update(tags_remove)
+
+        task.tags = await self.get_or_create_tags(user, list(current_tags))
 
     async def _get_or_create_tag(self, user: User, tag_name: str | Tag) -> Tag:
         if isinstance(tag_name, Tag):
