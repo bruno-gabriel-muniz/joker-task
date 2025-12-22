@@ -56,3 +56,22 @@ def test_created_at_tag(client: TestClient, users):
     expected = time.replace(microsecond=0).isoformat()
     assert expected[:-1].startswith(data[0]['updated_at'])
     assert expected[:-1].startswith(data[0]['created_at'])
+
+
+def test_list_tags(client: TestClient, users, tags):
+    rsp = client.get(
+        '/tags',
+        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = rsp.json()
+
+    returned = {tag['name']: tag for tag in data}
+
+    assert tags[0]['name'] in returned
+    assert tags[1]['name'] in returned
+
+    assert returned[tags[0]['name']]['id_tag'] == tags[0]['id_tag']
+    assert returned[tags[1]['name']]['id_tag'] == tags[1]['id_tag']

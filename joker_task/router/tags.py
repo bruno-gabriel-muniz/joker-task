@@ -3,10 +3,11 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from loguru import logger
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from joker_task.db.database import get_session
-from joker_task.db.models import User
+from joker_task.db.models import Tag, User
 from joker_task.interfaces.interfaces import (
     MapperInterface,
     TagControlerInterface,
@@ -47,3 +48,14 @@ async def create_tag(
         await session.refresh(tag)
 
     return [mapper.map_tag_public(tag_db) for tag_db in tags_db]
+
+
+@tags_router.get(
+    '/', response_model=list[TagPublic], status_code=HTTPStatus.OK
+)
+async def list_tags(user: T_User, session: T_Session, mapper: T_Mapper):
+    tags_db = (
+        await session.scalars(select(Tag).where(Tag.user_email == user.email))
+    ).all()
+
+    return [mapper.map_tag_public(tag) for tag in tags_db]
