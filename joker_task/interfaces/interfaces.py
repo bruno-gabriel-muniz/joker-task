@@ -4,7 +4,7 @@ from typing import Any, Sequence
 from sqlalchemy import Select
 
 from joker_task.db.models import Tag, Task, User
-from joker_task.schemas import Filter, TaskPublic, UserPublic
+from joker_task.schemas import Filter, TagPublic, TaskPublic, UserPublic
 
 
 class TaskCollectorInterface(ABC):
@@ -61,4 +61,9 @@ class MapperInterface(ABC):
     @staticmethod
     @abstractmethod
     def map_tag_str(tag_db: Tag) -> str:
+        pass  # pragma: no cover
+
+    @staticmethod
+    @abstractmethod
+    def map_tag_public(tag_db: Tag) -> TagPublic:
         pass  # pragma: no cover

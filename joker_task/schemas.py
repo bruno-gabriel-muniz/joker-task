@@ -35,8 +35,16 @@ class Token(BaseModel):
     token_type: str = 'bearer'
 
 
-class TagInTask(BaseModel):
+class TagsSchema(BaseModel):
+    names: Sequence[str]
+
+
+class TagPublic(BaseModel):
     name: str
+    id_tag: int
+    user_email: EmailStr
+    created_at: datetime
+    updated_at: datetime
 
 
 class TaskSchema(BaseModel):

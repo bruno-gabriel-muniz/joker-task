@@ -2,7 +2,7 @@ from loguru import logger
 
 from joker_task.db.models import Tag, Task, User
 from joker_task.interfaces.interfaces import MapperInterface
-from joker_task.schemas import TaskPublic, UserPublic
+from joker_task.schemas import TagPublic, TaskPublic, UserPublic
 
 
 class Mapper(MapperInterface):
@@ -46,3 +46,15 @@ class Mapper(MapperInterface):
         logger.info(f'Mapping tag {tag_db.name} to string')
 
         return tag_db.name
+
+    @staticmethod
+    def map_tag_public(tag_db: Tag) -> TagPublic:
+        tag_rsp = TagPublic(
+            name=tag_db.name,
+            id_tag=tag_db.id_tag,
+            user_email=tag_db.user_email,
+            created_at=tag_db.created_at,
+            updated_at=tag_db.updated_at,
+        )
+
+        return tag_rsp

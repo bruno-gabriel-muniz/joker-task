@@ -40,6 +40,7 @@ class TagControler(TagControlerInterface):
         tags_add: Sequence[str] | None,
         tags_remove: Sequence[str] | None,
     ) -> None:
+        logger.info('updating tags of task with id = {task.id_task}')
         current_tags = {tag.name for tag in task.tags}
 
         if tags_add:
@@ -61,7 +62,7 @@ class TagControler(TagControlerInterface):
         )
 
         if not tag:
-            tag = Tag(name=tag_name, user_email=user.email, user=user)
+            tag = Tag(tag_name, user.email, user)
             logger.info(f'creating new tag: {tag_name}')
             self.session.add(tag)
         else:

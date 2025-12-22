@@ -108,3 +108,13 @@ class Tag:
         lazy='selectin',
         init=False,
     )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        init=False,
+        server_default=func.now(),
+        server_onupdate=func.now(),
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, init=False, server_default=func.now()
+    )

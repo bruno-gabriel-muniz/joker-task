@@ -83,7 +83,7 @@ async def users(session) -> list[dict[str, str]]:
 
 
 @pytest_asyncio.fixture
-async def tasks(session: AsyncSession, users) -> list[dict[str, Any]]:
+async def tags(session: AsyncSession, users) -> list[dict[str, Any]]:
     users_in_db = (
         await session.scalars(select(User).order_by(User.email))
     ).all()
@@ -94,6 +94,24 @@ async def tasks(session: AsyncSession, users) -> list[dict[str, Any]]:
 
     session.add(tag_test_filters)
     session.add(tag_test_none)
+
+    out = [
+        {'name': 'test_filters', 'user_email': users[0]['email'], 'id_tag': 1},
+        {'name': 'test_none', 'user_email': users[0]['email'], 'id_tag': 2},
+    ]
+
+    return out
+
+
+@pytest_asyncio.fixture
+async def tasks(session: AsyncSession, users, tags) -> list[dict[str, Any]]:
+    users_in_db = (
+        await session.scalars(select(User).order_by(User.email))
+    ).all()
+
+    tag_test_filters, tag_test_none = await session.scalars(
+        select(Tag).order_by(Tag.id_tag)
+    )
 
     list_task = [
         {
