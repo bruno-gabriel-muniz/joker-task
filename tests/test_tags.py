@@ -75,3 +75,50 @@ def test_list_tags(client: TestClient, users, tags):
 
     assert returned[tags[0]['name']]['id_tag'] == tags[0]['id_tag']
     assert returned[tags[1]['name']]['id_tag'] == tags[1]['id_tag']
+
+
+@pytest.mark.asyncio
+async def test_update_tag(
+    client: TestClient, session: AsyncSession, users, tags
+):
+    new_name = 'updated_name'
+    rsp = client.patch(
+        f'/tags/{tags[0]["id_tag"]}',
+        json={'name': new_name},
+        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = rsp.json()
+
+    assert data['id_tag'] == tags[0]['id_tag']
+    assert data['name'] == new_name
+
+    tag_db = await session.scalar(
+        select(Tag).where(Tag.id_tag == tags[0]['id_tag'])
+    )
+
+    assert tag_db is not None
+    assert tag_db.name == new_name
+
+
+def test_update_tag_conflict(client: TestClient, users, tags):
+    rsp = client.patch(
+        f'/tags/{tags[0]["id_tag"]}',
+        json={'name': tags[1]['name']},
+        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.CONFLICT
+    assert rsp.json()['detail'] == 'name already in use'
+
+
+def test_update_tag_not_found(client: TestClient, users):
+    rsp = client.patch(
+        '/tags/9999',
+        json={'name': 'updated_name'},
+        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NOT_FOUND

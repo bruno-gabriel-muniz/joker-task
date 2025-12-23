@@ -39,6 +39,10 @@ class TagsSchema(BaseModel):
     names: Sequence[str]
 
 
+class TagUpdate(BaseModel):
+    name: str
+
+
 class TagPublic(BaseModel):
     name: str
     id_tag: int

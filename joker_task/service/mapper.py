@@ -43,8 +43,6 @@ class Mapper(MapperInterface):
 
     @staticmethod
     def map_tag_str(tag_db: Tag) -> str:
-        logger.info(f'Mapping tag {tag_db.name} to string')
-
         return tag_db.name
 
     @staticmethod
