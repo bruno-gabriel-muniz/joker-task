@@ -122,3 +122,44 @@ def test_update_tag_not_found(client: TestClient, users):
     )
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.asyncio
+async def test_delete_tag(
+    client: TestClient, session: AsyncSession, users, tags, tasks
+):
+    id_tag = 1
+    rsp = client.delete(
+        f'/tags/{id_tag}',
+        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NO_CONTENT
+
+    tag_db = await session.scalar(select(Tag).where(Tag.id_tag == id_tag))
+
+    assert tag_db is None
+
+
+@pytest.mark.asyncio
+async def test_delete_tag_not_found(client: TestClient, users, tags, tasks):
+    id_tag = 3
+    rsp = client.delete(
+        f'/tags/{id_tag}',
+        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.asyncio
+async def test_delete_tag_not_found_with_incorrect_user(
+    client: TestClient, users, tags, tasks
+):
+    id_tag = 3
+    rsp = client.delete(
+        f'/tags/{id_tag}',
+        headers={'Authorization': f'bearer {users[1]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NOT_FOUND

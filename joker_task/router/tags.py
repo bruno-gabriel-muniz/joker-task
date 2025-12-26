@@ -104,3 +104,20 @@ async def update_tag(
 
     logger.info(f'Tag {id} updated for user {user.email}')
     return mapper.map_tag_public(tag_db)
+
+
+@tags_router.delete('/{id}', status_code=HTTPStatus.NO_CONTENT)
+async def delete_tag(
+    id: int,
+    user: T_User,
+    session: T_Session,
+):
+    tag_db = await session.scalar(
+        select(Tag).where(Tag.user_email == user.email, Tag.id_tag == id)
+    )
+
+    if not tag_db:
+        raise HTTPException(HTTPStatus.NOT_FOUND)
+
+    await session.delete(tag_db)
+    await session.commit()
