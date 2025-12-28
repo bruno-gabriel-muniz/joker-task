@@ -83,12 +83,13 @@ O projeto está em evolução contínua, com foco em **qualidade de código**, *
 │ │ └── models.py
 │ ├── router
 │ │ ├── auth.py
-│ │ └── tasks.py
+│ │ ├── tasks.py
+│ │ └── tags.py
 │ ├── service
 │ │ ├── security.py
 │ │ ├── task_collector.py
 │ │ ├── tags_controler.py
-| | ├── make_filters.py
+│ │ ├── make_filters.py
 │ │ └── mapper.py
 │ ├── interfaces
 │ │ └── interfaces.py
@@ -123,7 +124,7 @@ O projeto está em evolução contínua, com foco em **qualidade de código**, *
 
 - **make_filters**: Camada que traduz os filtros para expressão SQL, utilizando o padrão *Factory*
 
-- **tags_controler**: Gerencia criação, reutilização e associação de tags por usuário.
+- **tags_controler**: Gerencia criação, reutilização, atualização e associação de tags por usuário.
 
 - **mapper**: Converte modelos ORM em schemas públicos, desacoplando banco de dados da API.
 
@@ -134,6 +135,7 @@ O projeto está em evolução contínua, com foco em **qualidade de código**, *
 - `User → auth → security`
 - `User → tasks → task_collector → mapper`
 - `User → tasks → (tags_controler, task_collector) → mapper`
+- `User → tags → tags_controler → mapper`
 
 ---
 
@@ -142,8 +144,9 @@ O projeto está em evolução contínua, com foco em **qualidade de código**, *
 - [X] Sistema de Login
 - [X] Sistema de Logs
 - [X] CRUD de Tasks
-- [ ] Evolução do domínio de Tags
+- [X] Router Tags
 - [ ] Integração com Workbenches
 - [ ] Filtros mais avançados (views reutilizáveis)
+- [ ] Evolução do domínio de Tags
 - [ ] Refatorações e melhorias arquiteturais contínuas
 
