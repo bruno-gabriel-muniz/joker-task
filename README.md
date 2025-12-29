@@ -40,8 +40,7 @@ O domínio do sistema é organizado em três conceitos centrais, além dos usuá
 Atualmente, o projeto conta com:
 
 - autenticação e autorização
-- CRUD de tarefas
-- sistema de tags por usuário
+- CRUD de tarefas e tags por usuário
 - filtragem dinâmica de tarefas
 - arquitetura modular com separação clara de responsabilidades
 - testes automatizados com cobertura
@@ -53,6 +52,7 @@ O projeto está em evolução contínua, com foco em **qualidade de código**, *
 ## Sumário
 
 - [Tecnologias Utilizadas](#tecnologias-utilizadas)
+- [Como Começar?](#como-começar)
 - [Estrutura do Projeto](#estrutura-do-projeto)
 - [Arquitetura](#arquitetura)
 - [Próximos Passos](#próximos-passos)
@@ -67,6 +67,35 @@ O projeto está em evolução contínua, com foco em **qualidade de código**, *
 - **Alembic**
 - **Pytest**
 - **Docker**
+
+---
+
+## Como Começar?
+
+**Requisitos**: Python 3.13 e Poetry.
+
+#### Como instalar as dependências?
+```
+poetry install
+```
+
+#### Como rodar o projeto?
+```
+poetry run alembic upgrade head
+poetry run task run
+```
+
+#### Como rodar os testes?
+```
+poetry run task test
+```
+
+#### Como usar os linters?
+
+```
+poetry run task lint
+poetry run task format
+```
 
 ---
 
