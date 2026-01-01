@@ -51,6 +51,18 @@ class TagPublic(BaseModel):
     updated_at: datetime
 
 
+class WorkbenchSchema(BaseModel):
+    name: str
+    columns: list[str] = Field(default_factory=list)
+
+
+class WorkbenchPublic(WorkbenchSchema):
+    id_workbench: int
+    user_email: EmailStr
+    created_at: datetime
+    updated_at: datetime
+
+
 class TaskSchema(BaseModel):
     title: str
     description: str | None = None

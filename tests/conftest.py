@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from joker_task.app import app
 from joker_task.db.database import get_session
-from joker_task.db.models import Tag, Task, User, table_registry
+from joker_task.db.models import Tag, Task, User, Workbench, table_registry
 from joker_task.service.security import (
     generate_access_token,
     get_hash_password,
@@ -104,13 +104,72 @@ async def tags(session: AsyncSession, users) -> list[dict[str, Any]]:
 
 
 @pytest_asyncio.fixture
-async def tasks(session: AsyncSession, users, tags) -> list[dict[str, Any]]:
+async def workbenches(session: AsyncSession, users) -> list[dict[str, Any]]:
+    users_in_db = (
+        await session.scalars(select(User).order_by(User.email))
+    ).all()
+
+    workbench1 = {
+        'name': 'workbench1',
+        'user_email': users[0]['email'],
+        'id_workbench': 1,
+        'columns': [],
+    }
+    workbench2 = {
+        'name': 'workbench2',
+        'user_email': users[0]['email'],
+        'id_workbench': 2,
+        'columns': ['To Do', 'In Progress', 'Done'],
+    }
+    workbench3 = {
+        'name': 'workbench3',
+        'user_email': users[1]['email'],
+        'id_workbench': 3,
+        'columns': [],
+    }
+
+    out = [workbench1, workbench2, workbench3]
+
+    workbench1_obj = Workbench(
+        name=workbench1['name'],
+        user_email=users[0]['email'],
+        user=users_in_db[0],
+        columns=workbench1['columns'],
+    )
+    workbench2_obj = Workbench(
+        name=workbench2['name'],
+        user_email=users[0]['email'],
+        user=users_in_db[0],
+        columns=workbench2['columns'],
+    )
+    workbench3_obj = Workbench(
+        name=workbench3['name'],
+        user_email=users[1]['email'],
+        user=users_in_db[1],
+        columns=workbench3['columns'],
+    )
+    session.add(workbench1_obj)
+    session.add(workbench2_obj)
+    session.add(workbench3_obj)
+    await session.commit()
+
+    return out
+
+
+@pytest_asyncio.fixture
+async def tasks(
+    session: AsyncSession, users, tags, workbenches
+) -> list[dict[str, Any]]:
     users_in_db = (
         await session.scalars(select(User).order_by(User.email))
     ).all()
 
     tag_test_filters, tag_test_none = await session.scalars(
         select(Tag).order_by(Tag.id_tag)
+    )
+
+    workbench1, workbench2, workbench3 = await session.scalars(
+        select(Workbench).order_by(Workbench.name)
     )
 
     list_task = [
@@ -121,6 +180,7 @@ async def tasks(session: AsyncSession, users, tags) -> list[dict[str, Any]]:
             'description': 'this is a test',
             'done': 0,
             'tags': [tag_test_filters, tag_test_none],
+            'workbenches': [workbench1, workbench2],
             'repetition': '0111110',
             'state': 'InProgress',
             'priority': 50,
@@ -131,6 +191,7 @@ async def tasks(session: AsyncSession, users, tags) -> list[dict[str, Any]]:
             'title': 'a other test',
             'done': 0,
             'tags': [tag_test_filters],
+            'workbenches': [workbench2],
             'repetition': '0111110',
             'state': 'ToDo',
             'priority': 60,
@@ -141,6 +202,7 @@ async def tasks(session: AsyncSession, users, tags) -> list[dict[str, Any]]:
             'title': 'title',
             'done': 0,
             'tags': [tag_test_none],
+            'workbenches': [workbench1],
             'repetition': '1000001',
             'state': 'Done',
             'priority': 100,
@@ -150,6 +212,7 @@ async def tasks(session: AsyncSession, users, tags) -> list[dict[str, Any]]:
             'user_email': users[1]['email'],
             'title': 'test',
             'done': 1,
+            'workbenches': [workbench3],
             'state': 'Done',
             'priority': 55,
         },
@@ -162,6 +225,7 @@ async def tasks(session: AsyncSession, users, tags) -> list[dict[str, Any]]:
         description=list_task[0]['description'],
         done=list_task[0]['done'],
         tags=list_task[0]['tags'],
+        workbenches=[workbench1, workbench2],
         repetition=list_task[0]['repetition'],
         state=list_task[0]['state'],
         priority=list_task[0]['priority'],
@@ -173,6 +237,7 @@ async def tasks(session: AsyncSession, users, tags) -> list[dict[str, Any]]:
         title=list_task[1]['title'],
         done=list_task[1]['done'],
         tags=list_task[1]['tags'],
+        workbenches=[workbench2],
         repetition=list_task[1]['repetition'],
         state=list_task[1]['state'],
         priority=list_task[1]['priority'],
@@ -185,6 +250,7 @@ async def tasks(session: AsyncSession, users, tags) -> list[dict[str, Any]]:
         title=list_task[2]['title'],
         done=list_task[2]['done'],
         tags=list_task[2]['tags'],
+        workbenches=[workbench1],
         repetition=list_task[2]['repetition'],
         state=list_task[2]['state'],
         priority=list_task[2]['priority'],
@@ -196,11 +262,12 @@ async def tasks(session: AsyncSession, users, tags) -> list[dict[str, Any]]:
         user=users_in_db[1],
         title=list_task[3]['title'],
         done=list_task[3]['done'],
+        tags=[],
+        workbenches=[workbench3],
         state=list_task[3]['state'],
         priority=list_task[3]['priority'],
         reminder=None,
         repetition=None,
-        tags=[],
         description=None,
     )
 

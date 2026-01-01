@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import List
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     Column,
     DateTime,
@@ -30,6 +31,10 @@ class User:
     )
     tags: Mapped[List['Tag']] = relationship(back_populates='user', init=False)
 
+    workbenches: Mapped[List['Workbench']] = relationship(
+        back_populates='user', init=False
+    )
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         init=False,
@@ -49,6 +54,18 @@ task_tag = Table(
 )
 
 
+task_workbench = Table(
+    'task_workbench',
+    table_registry.metadata,
+    Column('id_task', ForeignKey('tasks.id_task'), primary_key=True),
+    Column(
+        'id_workbench',
+        ForeignKey('workbenches.id_workbench'),
+        primary_key=True,
+    ),
+)
+
+
 @table_registry.mapped_as_dataclass
 class Task:
     __tablename__ = 'tasks'
@@ -62,7 +79,7 @@ class Task:
     title: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    done: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    done: Mapped[bool] = mapped_column(Boolean, nullable=True)
     reminder: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     repetition: Mapped[str | None] = mapped_column(
         String, nullable=True
@@ -75,7 +92,13 @@ class Task:
         back_populates='tasks',
         lazy='selectin',
     )
-    priority: Mapped[int] = mapped_column(Integer, default=100)
+    workbenches: Mapped[List['Workbench']] = relationship(
+        'Workbench',
+        secondary=task_workbench,
+        back_populates='tasks',
+        lazy='selectin',
+    )
+    priority: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
@@ -107,6 +130,39 @@ class Tag:
         back_populates='tags',
         lazy='selectin',
         init=False,
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        init=False,
+        server_default=func.now(),
+        server_onupdate=func.now(),
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, init=False, server_default=func.now()
+    )
+
+
+@table_registry.mapped_as_dataclass
+class Workbench:
+    __tablename__ = 'workbenches'
+    __table_args__ = (UniqueConstraint('user_email', 'name'),)
+
+    user_email: Mapped[str] = mapped_column(ForeignKey('users.email'))
+    user: Mapped['User'] = relationship(back_populates='workbenches')
+
+    tasks: Mapped[List['Task']] = relationship(
+        'Task',
+        secondary=task_workbench,
+        back_populates='workbenches',
+        lazy='selectin',
+        init=False,
+    )
+
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    columns: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    id_workbench: Mapped[int] = mapped_column(
+        Integer, primary_key=True, init=False, autoincrement=True
     )
 
     updated_at: Mapped[datetime] = mapped_column(

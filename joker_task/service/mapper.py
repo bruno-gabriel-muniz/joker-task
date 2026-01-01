@@ -1,8 +1,13 @@
 from loguru import logger
 
-from joker_task.db.models import Tag, Task, User
+from joker_task.db.models import Tag, Task, User, Workbench
 from joker_task.interfaces.interfaces import MapperInterface
-from joker_task.schemas import TagPublic, TaskPublic, UserPublic
+from joker_task.schemas import (
+    TagPublic,
+    TaskPublic,
+    UserPublic,
+    WorkbenchPublic,
+)
 
 
 class Mapper(MapperInterface):
@@ -56,3 +61,14 @@ class Mapper(MapperInterface):
         )
 
         return tag_rsp
+
+    @staticmethod
+    def map_workbench_public(workbench_db: Workbench) -> WorkbenchPublic:
+        return WorkbenchPublic(
+            name=workbench_db.name,
+            columns=workbench_db.columns,
+            id_workbench=workbench_db.id_workbench,
+            user_email=workbench_db.user_email,
+            created_at=workbench_db.created_at,
+            updated_at=workbench_db.updated_at,
+        )

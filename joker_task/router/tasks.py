@@ -52,12 +52,13 @@ async def create_task(
         user=user,
         title=task.title,
         description=task.description,
-        done=task.done,
+        done=task.done or False,
         tags=task.tags,
         reminder=task.reminder,
         repetition=task.repetition,
         state=task.state,
         priority=task.priority,
+        workbenches=[],
     )
 
     logger.info('saving the task to the db')

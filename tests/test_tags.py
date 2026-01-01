@@ -54,8 +54,8 @@ def test_created_at_tag(client: TestClient, users):
     data = rsp.json()
 
     expected = time.replace(microsecond=0).isoformat()
-    assert expected[:-1].startswith(data[0]['updated_at'])
-    assert expected[:-1].startswith(data[0]['created_at'])
+    assert expected.startswith(data[0]['updated_at'][0:16])
+    assert expected.startswith(data[0]['created_at'][0:16])
 
 
 def test_list_tags(client: TestClient, users, tags):

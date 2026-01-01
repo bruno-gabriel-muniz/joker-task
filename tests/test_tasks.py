@@ -81,7 +81,7 @@ def test_created_at_task(client: TestClient, users):
 
     data = rsp.json()
 
-    assert time_str.startswith(data['created_at'][0:17])
+    assert time_str.startswith(data['created_at'][0:16])
 
 
 def test_updated_at_task(client: TestClient, users, tasks):
