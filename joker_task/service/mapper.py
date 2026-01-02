@@ -34,6 +34,9 @@ class Mapper(MapperInterface):
             description=task_db.description,
             done=task_db.done,
             tags=[Mapper.map_tag_str(tag) for tag in task_db.tags],
+            workbenches=[
+                workbench.id_workbench for workbench in task_db.workbenches
+            ],
             reminder=task_db.reminder,
             repetition=task_db.repetition,
             state=task_db.state,

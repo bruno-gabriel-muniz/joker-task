@@ -53,6 +53,24 @@ class TagControlerInterface(ABC):
         pass  # pragma: no cover
 
 
+class WorkbenchControlerInterface(ABC):
+    @abstractmethod
+    async def collect_workbenches_by_id(
+        self, user: User, id_workbenches: Sequence[int]
+    ) -> Sequence[Workbench]:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    async def update_workbenches_of_task(
+        self,
+        user: User,
+        task: Task,
+        workbenches_add: Sequence[int] | None,
+        workbenches_remove: Sequence[int] | None,
+    ) -> None:
+        pass  # pragma: no cover
+
+
 class MapperInterface(ABC):
     @staticmethod
     @abstractmethod

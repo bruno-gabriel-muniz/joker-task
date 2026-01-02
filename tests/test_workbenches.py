@@ -2,11 +2,19 @@ from datetime import datetime
 from http import HTTPStatus
 from zoneinfo import ZoneInfo
 
+import pytest
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from joker_task.db.models import Workbench
 
 
-def test_create_workbench(client: TestClient, users):
+@pytest.mark.asyncio
+async def test_create_workbench(
+    client: TestClient, session: AsyncSession, users
+):
     rsp = client.post(
         '/workbenches/',
         json={
@@ -24,6 +32,13 @@ def test_create_workbench(client: TestClient, users):
     assert data['user_email'] == users[0]['email']
     assert data['name'] == 'workbench3'
     assert data['columns'] == ['To Do', 'In Progress', 'Done']
+
+    workbench_db = await session.scalar(
+        select(Workbench).where(Workbench.id_workbench == data['id_workbench'])
+    )
+
+    assert workbench_db is not None
+    assert workbench_db.name == data['name']
 
 
 def test_create_workbench_conflict(client: TestClient, users, workbenches):
@@ -56,3 +71,20 @@ def test_created_at_workbench(client: TestClient, users):
     expected = time.replace(microsecond=0).isoformat()
     assert expected.startswith(data['created_at'][0:16])
     assert expected.startswith(data['updated_at'][0:16])
+
+
+def test_not_found_workbench(client: TestClient, users, workbenches):
+    rsp = client.post(
+        '/tasks/',
+        json={
+            'title': 'test workbench',
+            'workbenches': [3],
+        },
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NOT_FOUND
+
+    data = rsp.json()
+
+    assert data['detail'] == 'workbench with id: 3, not found'

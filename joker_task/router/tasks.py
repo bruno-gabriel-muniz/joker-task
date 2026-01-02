@@ -11,6 +11,7 @@ from joker_task.interfaces.interfaces import (
     MapperInterface,
     TagControlerInterface,
     TaskCollectorInterface,
+    WorkbenchControlerInterface,
 )
 from joker_task.schemas import (
     Filter,
@@ -23,12 +24,16 @@ from joker_task.service.mapper import Mapper
 from joker_task.service.security import get_user
 from joker_task.service.tags_controler import TagControler
 from joker_task.service.task_collector import TaskCollector
+from joker_task.service.workbench_controler import WorkbenchControler
 
 T_Session = Annotated[AsyncSession, Depends(get_session)]
 T_User = Annotated[User, Depends(get_user)]
 T_Filter = Annotated[Filter, Query()]
 T_CollectorTask = Annotated[TaskCollectorInterface, Depends(TaskCollector)]
 T_TagControler = Annotated[TagControlerInterface, Depends(TagControler)]
+T_WorkbenchControler = Annotated[
+    WorkbenchControlerInterface, Depends(WorkbenchControler)
+]
 T_Mapper = Annotated[MapperInterface, Depends(Mapper)]
 
 tasks_router = APIRouter(prefix='/tasks', tags=['tasks'])
@@ -37,14 +42,18 @@ tasks_router = APIRouter(prefix='/tasks', tags=['tasks'])
 @tasks_router.post(
     '/', response_model=TaskPublic, status_code=HTTPStatus.CREATED
 )
-async def create_task(
+async def create_task(  # noqa: PLR0913, PLR0917
     task: TaskSchema,
     session: T_Session,
     user: T_User,
     tag_controler: T_TagControler,
+    workbench_controler: T_WorkbenchControler,
     mapper: T_Mapper,
 ):
     task.tags = await tag_controler.get_or_create_tags(user, task.tags)
+    workbenches_db = await workbench_controler.collect_workbenches_by_id(
+        user, task.workbenches
+    )
 
     logger.info('creating the new task')
     task_db = Task(
@@ -58,7 +67,7 @@ async def create_task(
         repetition=task.repetition,
         state=task.state,
         priority=task.priority,
-        workbenches=[],
+        workbenches=list(workbenches_db),
     )
 
     logger.info('saving the task to the db')
@@ -110,6 +119,7 @@ async def update_task(  # noqa: PLR0913, PLR0917
     user: T_User,
     session: T_Session,
     tag_controler: T_TagControler,
+    workbench_controler: T_WorkbenchControler,
     collector: T_CollectorTask,
     mapper: T_Mapper,
 ):
@@ -121,6 +131,11 @@ async def update_task(  # noqa: PLR0913, PLR0917
         user, task_db, task.tags_add, task.tags_remove
     )
     task.tags_add = task.tags_remove = None
+
+    await workbench_controler.update_workbenches_of_task(
+        user, task_db, task.workbenches_add, task.workbenches_remove
+    )
+    task.workbenches_add = task.workbenches_remove = None
 
     for key, value in task.model_dump(
         exclude_unset=True, exclude_none=True

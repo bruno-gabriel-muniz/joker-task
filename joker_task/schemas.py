@@ -67,7 +67,8 @@ class TaskSchema(BaseModel):
     title: str
     description: str | None = None
     done: bool | None = None
-    tags: Sequence[str | Tag] | None = []
+    tags: Sequence[str | Tag] = Field(default_factory=list)
+    workbenches: Sequence[int] = Field(default_factory=list)
     reminder: datetime | None = None
     repetition: str | None = None
     state: str | None = None
@@ -80,6 +81,8 @@ class TaskUpdate(BaseModel):
     done: bool | None = None
     tags_add: Sequence[str] | None = None
     tags_remove: Sequence[str] | None = None
+    workbenches_add: Sequence[int] | None = None
+    workbenches_remove: Sequence[int] | None = None
     reminder: datetime | None = None
     repetition: str | None = None
     state: str | None = None

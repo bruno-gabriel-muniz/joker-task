@@ -12,7 +12,8 @@ from sqlalchemy.orm import selectinload
 from joker_task.db.models import Task
 
 
-def test_create_task(client: TestClient, users):
+@pytest.mark.asyncio
+async def test_create_task(client: TestClient, session: AsyncSession, users):
     rsp = client.post(
         '/tasks/',
         json={'title': 'testar o JokerTask', 'done': False},
@@ -28,8 +29,15 @@ def test_create_task(client: TestClient, users):
     assert data['title'] == 'testar o JokerTask'
     assert data['done'] is False
 
+    task_db = await session.scalar(
+        select(Task).where(Task.id_task == data['id_task'])
+    )
 
-def test_create_full_task(client: TestClient, users):
+    assert task_db is not None
+    assert task_db.title == data['title']
+
+
+def test_create_full_task(client: TestClient, users, workbenches):
     reminder = datetime.now()
     priority = 10
 
@@ -40,6 +48,7 @@ def test_create_full_task(client: TestClient, users):
             'description': 'testando agora',
             'done': False,
             'tags': ['test1', 'test2'],
+            'workbenches': [1, 2],
             'reminder': reminder.isoformat(),
             'repetition': '0111110',
             'state': 'TODO',
@@ -58,6 +67,7 @@ def test_create_full_task(client: TestClient, users):
     assert data['description'] == 'testando agora'
     assert data['done'] is False
     assert sorted(data['tags']) == sorted(['test1', 'test2'])
+    assert sorted(data['workbenches']) == [1, 2]
     assert data['reminder'] == reminder.isoformat()
     assert data['repetition'] == '0111110'
     assert data['state'] == 'TODO'
@@ -127,6 +137,9 @@ async def test_update_task(
         'tags_add': ['atualizada1', 'atualizada2'],
         'tags_remove': ['test_none'],
         'tags': ['atualizada1', 'atualizada2', 'test_filters'],
+        'workbenches_add': [1],
+        'workbenches_remove': [2],
+        'workbenches': [1],
         'repetition': '',
         'priority': 75,
     }
@@ -153,6 +166,8 @@ async def test_update_task(
 
     new_data.pop('tags_add')
     new_data.pop('tags_remove')
+    new_data.pop('workbenches_add')
+    new_data.pop('workbenches_remove')
 
     assert data == new_data
 
