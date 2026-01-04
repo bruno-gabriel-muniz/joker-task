@@ -1,20 +1,11 @@
 from http import HTTPStatus
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from joker_task.db.database import get_session
-from joker_task.db.models import User, Workbench
-from joker_task.interfaces.interfaces import MapperInterface
+from joker_task.db.models import Workbench
 from joker_task.schemas import WorkbenchPublic, WorkbenchSchema
-from joker_task.service.mapper import Mapper
-from joker_task.service.security import get_user
-
-T_Session = Annotated[AsyncSession, Depends(get_session)]
-T_User = Annotated[User, Depends(get_user)]
-T_Mapper = Annotated[MapperInterface, Depends(Mapper)]
+from joker_task.service.dependencies import T_Mapper, T_Session, T_User
 
 workbenches_router = APIRouter(prefix='/workbenches', tags=['workbenches'])
 

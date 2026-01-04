@@ -1,40 +1,24 @@
 from http import HTTPStatus
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter
 from loguru import logger
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from joker_task.db.database import get_session
-from joker_task.db.models import Task, User
-from joker_task.interfaces.interfaces import (
-    MapperInterface,
-    TagControlerInterface,
-    TaskCollectorInterface,
-    WorkbenchControlerInterface,
-)
+from joker_task.db.models import Task
 from joker_task.schemas import (
-    Filter,
     ResponseTasks,
     TaskPublic,
     TaskSchema,
     TaskUpdate,
 )
-from joker_task.service.mapper import Mapper
-from joker_task.service.security import get_user
-from joker_task.service.tags_controler import TagControler
-from joker_task.service.task_collector import TaskCollector
-from joker_task.service.workbench_controler import WorkbenchControler
-
-T_Session = Annotated[AsyncSession, Depends(get_session)]
-T_User = Annotated[User, Depends(get_user)]
-T_Filter = Annotated[Filter, Query()]
-T_CollectorTask = Annotated[TaskCollectorInterface, Depends(TaskCollector)]
-T_TagControler = Annotated[TagControlerInterface, Depends(TagControler)]
-T_WorkbenchControler = Annotated[
-    WorkbenchControlerInterface, Depends(WorkbenchControler)
-]
-T_Mapper = Annotated[MapperInterface, Depends(Mapper)]
+from joker_task.service.dependencies import (
+    T_CollectorTask,
+    T_Filter,
+    T_Mapper,
+    T_Session,
+    T_TagControler,
+    T_User,
+    T_WorkbenchControler,
+)
 
 tasks_router = APIRouter(prefix='/tasks', tags=['tasks'])
 

@@ -1,28 +1,22 @@
 from http import HTTPStatus
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import APIRouter, HTTPException
 from loguru import logger
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from joker_task.db.database import get_session
 from joker_task.db.models import User
-from joker_task.interfaces.interfaces import MapperInterface
 from joker_task.schemas import Token, UserPublic, UserSchema, UserUpdate
-from joker_task.service.mapper import Mapper
+from joker_task.service.dependencies import (
+    T_Mapper,
+    T_OAuth2PRF,
+    T_Session,
+    T_User,
+)
 from joker_task.service.security import (
     generate_access_token,
     get_hash_password,
-    get_user,
     verify_password,
 )
-
-T_Session = Annotated[AsyncSession, Depends(get_session)]
-T_OAuth2PRF = Annotated[OAuth2PasswordRequestForm, Depends()]
-T_User = Annotated[User, Depends(get_user)]
-T_Mapper = Annotated[MapperInterface, Depends(Mapper)]
 
 auth_router = APIRouter(prefix='', tags=['auth'])
 

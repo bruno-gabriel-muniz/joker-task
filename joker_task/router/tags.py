@@ -1,31 +1,21 @@
 from http import HTTPStatus
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from loguru import logger
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from joker_task.db.database import get_session
-from joker_task.db.models import Tag, User
-from joker_task.interfaces.interfaces import (
-    MapperInterface,
-    TagControlerInterface,
-)
+from joker_task.db.models import Tag
 from joker_task.schemas import (
     TagPublic,
     TagsSchema,
     TagUpdate,
 )
-from joker_task.service.mapper import Mapper
-from joker_task.service.security import get_user
-from joker_task.service.tags_controler import TagControler
-
-T_Session = Annotated[AsyncSession, Depends(get_session)]
-T_User = Annotated[User, Depends(get_user)]
-T_TagControler = Annotated[TagControlerInterface, Depends(TagControler)]
-T_Mapper = Annotated[MapperInterface, Depends(Mapper)]
-
+from joker_task.service.dependencies import (
+    T_Mapper,
+    T_Session,
+    T_TagControler,
+    T_User,
+)
 
 tags_router = APIRouter(prefix='/tags', tags=['tags'])
 
