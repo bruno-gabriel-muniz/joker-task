@@ -41,3 +41,18 @@ async def create_workbench(
     await session.refresh(workbench_db)
 
     return mapper.map_workbench_public(workbench_db)
+
+
+@workbenches_router.get(
+    '/', response_model=list[WorkbenchPublic], status_code=HTTPStatus.OK
+)
+async def list_workbenches(user: T_User, session: T_Session, mapper: T_Mapper):
+    workbenches_db = (
+        await session.scalars(
+            select(Workbench).where(Workbench.user_email == user.email)
+        )
+    ).all()
+
+    return [
+        mapper.map_workbench_public(workbench) for workbench in workbenches_db
+    ]

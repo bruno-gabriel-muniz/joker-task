@@ -88,3 +88,19 @@ def test_not_found_workbench(client: TestClient, users, workbenches):
     data = rsp.json()
 
     assert data['detail'] == 'workbench with id: 3, not found'
+
+
+def test_list_workbenches(client: TestClient, users, workbenches):
+    rsp = client.get(
+        '/workbenches/',
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = {workbench['id_workbench']: workbench for workbench in rsp.json()}
+
+    workbench_spec = 2
+    assert len(data) == workbench_spec
+    assert data[1]['name'] == 'workbench1'
+    assert data[2]['name'] == 'workbench2'
