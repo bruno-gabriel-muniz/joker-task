@@ -63,6 +63,11 @@ class WorkbenchPublic(WorkbenchSchema):
     updated_at: datetime
 
 
+class WorkbenchWithTasks(BaseModel):
+    workbench: WorkbenchPublic
+    tasks: list['TaskPublic']
+
+
 class TaskSchema(BaseModel):
     title: str
     description: str | None = None

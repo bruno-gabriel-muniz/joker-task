@@ -104,3 +104,44 @@ def test_list_workbenches(client: TestClient, users, workbenches):
     assert len(data) == workbench_spec
     assert data[1]['name'] == 'workbench1'
     assert data[2]['name'] == 'workbench2'
+
+
+def test_get_workbench_by_id(client: TestClient, users, tasks, workbenches):
+    rsp = client.get(
+        '/workbenches/1',
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = rsp.json()
+
+    workbench, tasks_rsp = data['workbench'], data['tasks']
+
+    assert workbench['id_workbench'] == 1
+    assert workbench['name'] == 'workbench1'
+
+    tasks_rsp = {task['id_task']: task for task in tasks_rsp}
+    qnt_task = 2
+
+    assert len(tasks_rsp) == qnt_task
+    assert tasks_rsp[2]['title'] == 'a other test'
+    assert tasks_rsp[3]['title'] == 'title'
+
+
+def test_get_workbench_by_id_not_found(client: TestClient, users):
+    rsp = client.get(
+        '/workbenches/999',
+        headers={'Authorization': f'Bearer {users[1]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_get_workbench_by_id_forbidden(client: TestClient, users, workbenches):
+    rsp = client.get(
+        '/workbenches/1',
+        headers={'Authorization': f'Bearer {users[1]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NOT_FOUND
