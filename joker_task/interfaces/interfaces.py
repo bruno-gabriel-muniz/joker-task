@@ -55,9 +55,23 @@ class TagControlerInterface(ABC):
 
 class WorkbenchControlerInterface(ABC):
     @abstractmethod
+    async def collect_workbench_by_id(
+        self, user: User, id_workbench: int
+    ) -> Workbench:
+        pass  # pragma: no cover
+
+    @abstractmethod
     async def collect_workbenches_by_id(
         self, user: User, id_workbenches: Sequence[int]
     ) -> Sequence[Workbench]:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    async def collect_workbenches(self, user: User) -> Sequence[Workbench]:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    async def check_workbench_name_exists(self, user: User, name: str) -> None:
         pass  # pragma: no cover
 
     @abstractmethod

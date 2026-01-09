@@ -31,7 +31,7 @@ async def test_create_workbench(
     assert data['id_workbench'] == 1
     assert data['user_email'] == users[0]['email']
     assert data['name'] == 'workbench3'
-    assert data['columns'] == ['To Do', 'In Progress', 'Done']
+    assert data['columns'] == sorted(['To Do', 'In Progress', 'Done'])
 
     workbench_db = await session.scalar(
         select(Workbench).where(Workbench.id_workbench == data['id_workbench'])
@@ -73,7 +73,9 @@ def test_created_at_workbench(client: TestClient, users):
     assert expected.startswith(data['updated_at'][0:16])
 
 
-def test_not_found_workbench(client: TestClient, users, workbenches):
+def test_not_found_workbench_in_update_task(
+    client: TestClient, users, workbenches
+):
     rsp = client.post(
         '/tasks/',
         json={
@@ -145,3 +147,88 @@ def test_get_workbench_by_id_forbidden(client: TestClient, users, workbenches):
     )
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND
+
+
+@pytest.mark.asyncio
+async def test_update_workbench_name(
+    client: TestClient, session: AsyncSession, users, workbenches
+):
+    rsp = client.patch(
+        '/workbenches/1',
+        json={'name': 'Updated Workbench'},
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = rsp.json()
+
+    assert data['id_workbench'] == 1
+    assert data['name'] == 'Updated Workbench'
+
+    workbench_db = await session.scalar(
+        select(Workbench).where(Workbench.id_workbench == data['id_workbench'])
+    )
+
+    assert workbench_db is not None
+    assert workbench_db.name == 'Updated Workbench'
+
+
+@pytest.mark.asyncio
+async def test_update_workbench_columns(
+    client: TestClient, session: AsyncSession, users, workbenches
+):
+    rsp = client.patch(
+        '/workbenches/2',
+        json={
+            'columns_add': ['Backlog', 'Completed'],
+            'columns_remove': ['To Do', 'Done'],
+        },
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = rsp.json()
+
+    id_workbench = 2
+    assert data['id_workbench'] == id_workbench
+    assert data['columns'] == sorted(['Backlog', 'In Progress', 'Completed'])
+
+    workbench_db = await session.scalar(
+        select(Workbench).where(Workbench.id_workbench == data['id_workbench'])
+    )
+
+    assert workbench_db is not None
+    assert (workbench_db.columns) == sorted([
+        'Backlog',
+        'In Progress',
+        'Completed',
+    ])
+
+
+@pytest.mark.asyncio
+async def test_updated_at_workbench(
+    client: TestClient, session: AsyncSession, users, workbenches
+):
+    time = datetime.now(ZoneInfo('UTC'))
+    with freeze_time(time):
+        rsp = client.patch(
+            '/workbenches/1',
+            json={'name': 'Time Updated Workbench'},
+            headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+        )
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = rsp.json()
+
+    expected = time.replace(microsecond=0).isoformat()
+    assert expected.startswith(data['updated_at'][0:16])
+
+    workbench_db = await session.scalar(
+        select(Workbench).where(Workbench.id_workbench == data['id_workbench'])
+    )
+
+    assert workbench_db is not None
+    assert expected.startswith(workbench_db.updated_at.isoformat()[0:16])

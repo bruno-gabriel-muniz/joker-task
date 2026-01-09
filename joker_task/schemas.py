@@ -51,6 +51,12 @@ class TagPublic(BaseModel):
     updated_at: datetime
 
 
+class WorkbenchUpdate(BaseModel):
+    name: str | None = None
+    columns_add: list[str] | None = None
+    columns_remove: list[str] | None = None
+
+
 class WorkbenchSchema(BaseModel):
     name: str
     columns: list[str] = Field(default_factory=list)
@@ -65,6 +71,7 @@ class WorkbenchPublic(WorkbenchSchema):
 
 class WorkbenchWithTasks(BaseModel):
     workbench: WorkbenchPublic
+    # columns: list[dict[str, 'TaskPublic']] # TODO
     tasks: list['TaskPublic']
 
 

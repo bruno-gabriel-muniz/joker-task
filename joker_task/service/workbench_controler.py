@@ -17,6 +17,22 @@ class WorkbenchControler(WorkbenchControlerInterface):
     def __init__(self, session: T_Session):
         self.session = session
 
+    async def collect_workbench_by_id(
+        self, user: User, id_workbench: int
+    ) -> Workbench:
+        logger.info(f'collecting workbenches with id: {id_workbench}')
+        workbench_db = await self.session.scalar(
+            select(Workbench).where(
+                Workbench.user_email == user.email,
+                Workbench.id_workbench == id_workbench,
+            )
+        )
+
+        if not workbench_db:
+            raise HTTPException(HTTPStatus.NOT_FOUND, 'workbench not found')
+
+        return workbench_db
+
     async def collect_workbenches_by_id(
         self, user: User, id_workbenches: Sequence[int]
     ) -> Sequence[Workbench]:
@@ -51,6 +67,29 @@ class WorkbenchControler(WorkbenchControlerInterface):
             )  # pragma: no cover
 
         return workbenches_db
+
+    async def collect_workbenches(self, user: User) -> Sequence[Workbench]:
+        logger.info(f'collecting workbenches of user: {user.email}')
+
+        result = await self.session.execute(
+            select(Workbench).where(
+                Workbench.user_email == user.email,
+            )
+        )
+
+        return result.scalars().all()
+
+    async def check_workbench_name_exists(self, user: User, name: str) -> None:
+        have_conflict = await self.session.scalar(
+            select(Workbench).where(
+                Workbench.name == name,
+                Workbench.user_email == user.email,
+            )
+        )
+        if have_conflict:
+            raise HTTPException(
+                HTTPStatus.CONFLICT, detail='workbench name already in use'
+            )
 
     async def update_workbenches_of_task(
         self,
