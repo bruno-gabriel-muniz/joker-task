@@ -232,3 +232,21 @@ async def test_updated_at_workbench(
 
     assert workbench_db is not None
     assert expected.startswith(workbench_db.updated_at.isoformat()[0:16])
+
+
+@pytest.mark.asyncio
+async def test_delete_workbench(
+    client: TestClient, session: AsyncSession, users, workbenches
+):
+    rsp = client.delete(
+        '/workbenches/1',
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NO_CONTENT
+
+    workbench_db = await session.scalar(
+        select(Workbench).where(Workbench.id_workbench == 1)
+    )
+
+    assert workbench_db is None

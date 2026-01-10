@@ -105,3 +105,16 @@ async def update_workbench(  # noqa: PLR0913, PLR0917
     await session.refresh(workbench_db)
 
     return mapper.map_workbench_public(workbench_db)
+
+
+@workbenches_router.delete('/{id}', status_code=HTTPStatus.NO_CONTENT)
+async def delete_workbench(
+    id: int,
+    user: T_User,
+    session: T_Session,
+    workbench_ctrl: T_WorkbenchControler,
+):
+    workbench_db = await workbench_ctrl.collect_workbench_by_id(user, id)
+
+    await session.delete(workbench_db)
+    await session.commit()
