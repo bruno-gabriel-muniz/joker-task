@@ -31,11 +31,25 @@ class StrategyMakeFilterInterface(ABC):
         pass  # pragma: no cover
 
 
-class TagControlerInterface(ABC):
+class TagControllerInterface(ABC):
     @abstractmethod
     async def get_or_create_tags(
         self, user: User, tag_names: Sequence[str | Tag] | None
     ) -> list[Tag]:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    async def collect_tag_by_id(self, user: User, id: int) -> Tag:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    async def collect_tags(self, user: User) -> Sequence[Tag]:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    async def check_tag_name_exists(
+        self, user: User, name: str, id: int
+    ) -> None:
         pass  # pragma: no cover
 
     @abstractmethod
@@ -48,12 +62,8 @@ class TagControlerInterface(ABC):
     ) -> None:
         pass  # pragma: no cover
 
-    @abstractmethod
-    async def _get_or_create_tag(self, user: User, tag_name: str | Tag) -> Tag:
-        pass  # pragma: no cover
 
-
-class WorkbenchControlerInterface(ABC):
+class WorkbenchControllerInterface(ABC):
     @abstractmethod
     async def collect_workbench_by_id(
         self, user: User, id_workbench: int

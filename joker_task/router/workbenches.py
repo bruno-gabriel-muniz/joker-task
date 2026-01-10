@@ -13,7 +13,7 @@ from joker_task.service.dependencies import (
     T_Mapper,
     T_Session,
     T_User,
-    T_WorkbenchControler,
+    T_WorkbenchController,
 )
 
 workbenches_router = APIRouter(prefix='/workbenches', tags=['workbenches'])
@@ -25,7 +25,7 @@ workbenches_router = APIRouter(prefix='/workbenches', tags=['workbenches'])
 async def create_workbench(
     workbench: WorkbenchSchema,
     user: T_User,
-    workbench_ctrl: T_WorkbenchControler,
+    workbench_ctrl: T_WorkbenchController,
     session: T_Session,
     mapper: T_Mapper,
 ):
@@ -48,7 +48,7 @@ async def create_workbench(
     '/', response_model=list[WorkbenchPublic], status_code=HTTPStatus.OK
 )
 async def list_workbenches(
-    user: T_User, workbench_ctrl: T_WorkbenchControler, mapper: T_Mapper
+    user: T_User, workbench_ctrl: T_WorkbenchController, mapper: T_Mapper
 ):
     workbenches_db = await workbench_ctrl.collect_workbenches(user)
 
@@ -65,7 +65,7 @@ async def list_workbenches(
 async def get_workbench(
     id: int,
     user: T_User,
-    workbench_ctrl: T_WorkbenchControler,
+    workbench_ctrl: T_WorkbenchController,
     mapper: T_Mapper,
 ):
     workbench_db = await workbench_ctrl.collect_workbench_by_id(user, id)
@@ -84,7 +84,7 @@ async def update_workbench(  # noqa: PLR0913, PLR0917
     workbench: WorkbenchUpdate,
     user: T_User,
     session: T_Session,
-    workbench_ctrl: T_WorkbenchControler,
+    workbench_ctrl: T_WorkbenchController,
     mapper: T_Mapper,
 ):
     workbench_db = await workbench_ctrl.collect_workbench_by_id(user, id)
@@ -112,7 +112,7 @@ async def delete_workbench(
     id: int,
     user: T_User,
     session: T_Session,
-    workbench_ctrl: T_WorkbenchControler,
+    workbench_ctrl: T_WorkbenchController,
 ):
     workbench_db = await workbench_ctrl.collect_workbench_by_id(user, id)
 

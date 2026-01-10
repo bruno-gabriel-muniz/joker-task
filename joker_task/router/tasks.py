@@ -15,9 +15,9 @@ from joker_task.service.dependencies import (
     T_Filter,
     T_Mapper,
     T_Session,
-    T_TagControler,
+    T_TagController,
     T_User,
-    T_WorkbenchControler,
+    T_WorkbenchController,
 )
 
 tasks_router = APIRouter(prefix='/tasks', tags=['tasks'])
@@ -30,8 +30,8 @@ async def create_task(  # noqa: PLR0913, PLR0917
     task: TaskSchema,
     session: T_Session,
     user: T_User,
-    tag_controler: T_TagControler,
-    workbench_controler: T_WorkbenchControler,
+    tag_controler: T_TagController,
+    workbench_controler: T_WorkbenchController,
     mapper: T_Mapper,
 ):
     task.tags = await tag_controler.get_or_create_tags(user, task.tags)
@@ -102,8 +102,8 @@ async def update_task(  # noqa: PLR0913, PLR0917
     task: TaskUpdate,
     user: T_User,
     session: T_Session,
-    tag_controler: T_TagControler,
-    workbench_controler: T_WorkbenchControler,
+    tag_controler: T_TagController,
+    workbench_controler: T_WorkbenchController,
     collector: T_CollectorTask,
     mapper: T_Mapper,
 ):

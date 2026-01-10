@@ -1,10 +1,8 @@
 from http import HTTPStatus
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from loguru import logger
-from sqlalchemy import select
 
-from joker_task.db.models import Tag
 from joker_task.schemas import (
     TagPublic,
     TagsSchema,
@@ -13,7 +11,7 @@ from joker_task.schemas import (
 from joker_task.service.dependencies import (
     T_Mapper,
     T_Session,
-    T_TagControler,
+    T_TagController,
     T_User,
 )
 
@@ -27,11 +25,11 @@ async def create_tag(
     tags: TagsSchema,
     user: T_User,
     session: T_Session,
-    tag_ctrl: T_TagControler,
+    tags_ctrl: T_TagController,
     mapper: T_Mapper,
 ):
     logger.info(f'Creating tags for user {user.email}')
-    tags_db = await tag_ctrl.get_or_create_tags(user, tags.names)
+    tags_db = await tags_ctrl.get_or_create_tags(user, tags.names)
 
     await session.commit()
 
@@ -45,10 +43,10 @@ async def create_tag(
 @tags_router.get(
     '/', response_model=list[TagPublic], status_code=HTTPStatus.OK
 )
-async def list_tags(user: T_User, session: T_Session, mapper: T_Mapper):
-    tags_db = (
-        await session.scalars(select(Tag).where(Tag.user_email == user.email))
-    ).all()
+async def list_tags(
+    user: T_User, tags_ctrl: T_TagController, mapper: T_Mapper
+):
+    tags_db = await tags_ctrl.collect_tags(user)
 
     logger.info(f'Listing tags for user {user.email}')
     return [mapper.map_tag_public(tag) for tag in tags_db]
@@ -57,33 +55,18 @@ async def list_tags(user: T_User, session: T_Session, mapper: T_Mapper):
 @tags_router.patch(
     '/{id}', response_model=TagPublic, status_code=HTTPStatus.OK
 )
-async def update_tag(
+async def update_tag(  # noqa: PLR0913, PLR0917
     id: int,
     data: TagUpdate,
     user: T_User,
     session: T_Session,
+    tags_ctrl: T_TagController,
     mapper: T_Mapper,
 ):
     logger.info(f'Updating tag {id} for user {user.email}')
-    have_conflict = await session.scalar(
-        select(Tag).where(
-            Tag.id_tag != id,
-            Tag.user_email == user.email,
-            Tag.name == data.name,
-        )
-    )
-    if have_conflict:
-        logger.info(f'Conflict when updating tag {id} for user {user.email}')
-        raise HTTPException(HTTPStatus.CONFLICT, 'name already in use')
+    await tags_ctrl.check_tag_name_exists(user, data.name, id)
 
-    tag_db = await session.scalar(
-        select(Tag).where(Tag.id_tag == id, Tag.user_email == user.email)
-    )
-    if not tag_db:
-        logger.info(f'Tag {id} not found for user {user.email}')
-        raise HTTPException(
-            HTTPStatus.NOT_FOUND,
-        )
+    tag_db = await tags_ctrl.collect_tag_by_id(user, id)
 
     tag_db.name = data.name
 
@@ -100,14 +83,10 @@ async def update_tag(
 async def delete_tag(
     id: int,
     user: T_User,
+    tags_ctrl: T_TagController,
     session: T_Session,
 ):
-    tag_db = await session.scalar(
-        select(Tag).where(Tag.user_email == user.email, Tag.id_tag == id)
-    )
-
-    if not tag_db:
-        raise HTTPException(HTTPStatus.NOT_FOUND)
+    tag_db = await tags_ctrl.collect_tag_by_id(user, id)
 
     await session.delete(tag_db)
     await session.commit()

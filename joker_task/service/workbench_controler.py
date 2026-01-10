@@ -8,12 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from joker_task.db.database import get_session
 from joker_task.db.models import Task, User, Workbench
-from joker_task.interfaces.interfaces import WorkbenchControlerInterface
+from joker_task.interfaces.interfaces import WorkbenchControllerInterface
 
 T_Session = Annotated[AsyncSession, Depends(get_session)]
 
 
-class WorkbenchControler(WorkbenchControlerInterface):
+class WorkbenchController(WorkbenchControllerInterface):
     def __init__(self, session: T_Session):
         self.session = session
 

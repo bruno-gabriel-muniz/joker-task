@@ -1,18 +1,19 @@
+from http import HTTPStatus
 from typing import Annotated, Sequence
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from joker_task.db.database import get_session
 from joker_task.db.models import Tag, Task, User
-from joker_task.interfaces.interfaces import TagControlerInterface
+from joker_task.interfaces.interfaces import TagControllerInterface
 
 T_Session = Annotated[AsyncSession, Depends(get_session)]
 
 
-class TagControler(TagControlerInterface):
+class TagController(TagControllerInterface):
     def __init__(self, session: T_Session):
         self.session = session
 
@@ -32,6 +33,47 @@ class TagControler(TagControlerInterface):
         ]
 
         return result
+
+    async def collect_tag_by_id(self, user: User, id: int) -> Tag:
+        logger.info(f'collecting tag with id = {id}')
+        tag = await self.session.scalar(
+            select(Tag).where(
+                Tag.user_email == user.email,
+                Tag.id_tag == id,
+            )
+        )
+
+        if not tag:
+            raise HTTPException(HTTPStatus.NOT_FOUND)
+
+        return tag
+
+    async def collect_tags(self, user: User) -> Sequence[Tag]:
+        logger.info(f'collecting tags for user {user.email}')
+        tags = (
+            await self.session.scalars(
+                select(Tag).where(Tag.user_email == user.email)
+            )
+        ).all()
+
+        return tags
+
+    async def check_tag_name_exists(
+        self, user: User, name: str, id: int
+    ) -> None:
+        logger.info(
+            f'checking if tag name "{name}" exists for user {user.email}'
+        )
+        have_conflict = await self.session.scalar(
+            select(Tag).where(
+                Tag.id_tag != id,
+                Tag.user_email == user.email,
+                Tag.name == name,
+            )
+        )
+
+        if have_conflict:
+            raise HTTPException(HTTPStatus.CONFLICT, 'name already in use')
 
     async def update_tags_of_task(
         self,
