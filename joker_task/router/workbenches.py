@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter
+from loguru import logger
 
 from joker_task.db.models import Workbench
 from joker_task.schemas import (
@@ -29,6 +30,7 @@ async def create_workbench(
     session: T_Session,
     mapper: T_Mapper,
 ):
+    logger.info(f'creating workbench: {workbench.name} for user: {user.email}')
     await workbench_ctrl.check_workbench_name_exists(user, workbench.name)
 
     workbench_db = Workbench(

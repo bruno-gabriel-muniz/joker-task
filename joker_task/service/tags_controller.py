@@ -18,7 +18,7 @@ class TagController(TagControllerInterface):
         self.session = session
 
     async def get_or_create_tags(
-        self, user: User, tag_names: Sequence[str | Tag] | None
+        self, user: User, tag_names: Sequence[str] | None
     ) -> list[Tag]:
         logger.info('getting or creating tags')
 
@@ -93,10 +93,7 @@ class TagController(TagControllerInterface):
 
         task.tags = await self.get_or_create_tags(user, list(current_tags))
 
-    async def _get_or_create_tag(self, user: User, tag_name: str | Tag) -> Tag:
-        if isinstance(tag_name, Tag):
-            return tag_name  # pragma: no cover
-
+    async def _get_or_create_tag(self, user: User, tag_name: str) -> Tag:
         tag = await self.session.scalar(
             select(Tag).where(
                 Tag.user_email == user.email, Tag.name == tag_name

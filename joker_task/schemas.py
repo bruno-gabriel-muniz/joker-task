@@ -3,8 +3,6 @@ from typing import Sequence
 
 from pydantic import BaseModel, EmailStr, Field
 
-from joker_task.db.models import Tag
-
 LOGIC_LIKE = 'LIKE'
 LOGIC_WITH_TAGS = 'WITH_TAGS'
 LOGIC_IN_LIST = 'IN_LIST'
@@ -79,7 +77,7 @@ class TaskSchema(BaseModel):
     title: str
     description: str | None = None
     done: bool | None = None
-    tags: Sequence[str | Tag] = Field(default_factory=list)
+    tags: Sequence[str] = Field(default_factory=list)
     workbenches: Sequence[int] = Field(default_factory=list)
     reminder: datetime | None = None
     repetition: str | None = None

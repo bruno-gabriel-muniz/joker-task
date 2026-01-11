@@ -15,9 +15,9 @@ from joker_task.interfaces.interfaces import (
 from joker_task.schemas import Filter
 from joker_task.service.mapper import Mapper
 from joker_task.service.security import get_user
-from joker_task.service.tags_controler import TagController
+from joker_task.service.tags_controller import TagController
 from joker_task.service.task_collector import TaskCollector
-from joker_task.service.workbench_controler import WorkbenchController
+from joker_task.service.workbench_controller import WorkbenchController
 
 T_CollectorTask = Annotated[TaskCollectorInterface, Depends(TaskCollector)]
 T_Filter = Annotated[Filter, Query()]

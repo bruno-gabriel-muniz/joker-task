@@ -34,7 +34,7 @@ async def create_task(  # noqa: PLR0913, PLR0917
     workbench_controler: T_WorkbenchController,
     mapper: T_Mapper,
 ):
-    task.tags = await tag_controler.get_or_create_tags(user, task.tags)
+    tags_db = await tag_controler.get_or_create_tags(user, task.tags)
     workbenches_db = await workbench_controler.collect_workbenches_by_id(
         user, task.workbenches
     )
@@ -46,12 +46,12 @@ async def create_task(  # noqa: PLR0913, PLR0917
         title=task.title,
         description=task.description,
         done=task.done or False,
-        tags=task.tags,
+        tags=tags_db,
+        workbenches=list(workbenches_db),
         reminder=task.reminder,
         repetition=task.repetition,
         state=task.state,
         priority=task.priority,
-        workbenches=list(workbenches_db),
     )
 
     logger.info('saving the task to the db')

@@ -34,7 +34,7 @@ class StrategyMakeFilterInterface(ABC):
 class TagControllerInterface(ABC):
     @abstractmethod
     async def get_or_create_tags(
-        self, user: User, tag_names: Sequence[str | Tag] | None
+        self, user: User, tag_names: Sequence[str] | None
     ) -> list[Tag]:
         pass  # pragma: no cover
 

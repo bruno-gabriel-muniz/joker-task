@@ -80,6 +80,7 @@ class WorkbenchController(WorkbenchControllerInterface):
         return result.scalars().all()
 
     async def check_workbench_name_exists(self, user: User, name: str) -> None:
+        logger.info(f'checking workbench name conflict: {name}')
         have_conflict = await self.session.scalar(
             select(Workbench).where(
                 Workbench.name == name,
@@ -98,6 +99,7 @@ class WorkbenchController(WorkbenchControllerInterface):
         workbenches_add: Sequence[int] | None,
         workbenches_remove: Sequence[int] | None,
     ) -> None:
+        logger.info(f'updating workbenches of task id: {task.id_task}')
         current_workbenches = {
             workbench.id_workbench for workbench in task.workbenches
         }

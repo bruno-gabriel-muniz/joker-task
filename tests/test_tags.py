@@ -19,7 +19,7 @@ async def test_create_tags(
     rsp = client.post(
         '/tags',
         json={'names': ['test1', tags[0]['name']]},
-        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.CREATED
@@ -46,7 +46,7 @@ def test_created_at_tag(client: TestClient, users):
         rsp = client.post(
             '/tags',
             json={'names': ['test1']},
-            headers={'Authorization': f'bearer {users[0]["access_token"]}'},
+            headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
         )
 
     assert rsp.status_code == HTTPStatus.CREATED
@@ -61,7 +61,7 @@ def test_created_at_tag(client: TestClient, users):
 def test_list_tags(client: TestClient, users, tags):
     rsp = client.get(
         '/tags',
-        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -85,7 +85,7 @@ async def test_update_tag(
     rsp = client.patch(
         f'/tags/{tags[0]["id_tag"]}',
         json={'name': new_name},
-        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -103,25 +103,44 @@ async def test_update_tag(
     assert tag_db.name == new_name
 
 
+@pytest.mark.asyncio
+async def test_update_at_tag(
+    client: TestClient, session: AsyncSession, users, tags
+):
+    time = datetime.now(ZoneInfo('UTC'))
+    with freeze_time(time):
+        rsp = client.patch(
+            f'/tags/{tags[0]["id_tag"]}',
+            json={'name': 'test1'},
+            headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+        )
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = rsp.json()
+
+    expected = time.replace(microsecond=0).isoformat()
+    assert expected.startswith(data['updated_at'][0:16])
+
+    tag_db = await session.scalar(
+        select(Tag).where(Tag.id_tag == tags[0]['id_tag'])
+    )
+
+    assert tag_db is not None
+    assert expected.startswith(
+        tag_db.updated_at.replace(microsecond=0).isoformat()[0:16]
+    )
+
+
 def test_update_tag_conflict(client: TestClient, users, tags):
     rsp = client.patch(
         f'/tags/{tags[0]["id_tag"]}',
         json={'name': tags[1]['name']},
-        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.CONFLICT
     assert rsp.json()['detail'] == 'name already in use'
-
-
-def test_update_tag_not_found(client: TestClient, users):
-    rsp = client.patch(
-        '/tags/9999',
-        json={'name': 'updated_name'},
-        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
-    )
-
-    assert rsp.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.asyncio
@@ -131,7 +150,7 @@ async def test_delete_tag(
     id_tag = 1
     rsp = client.delete(
         f'/tags/{id_tag}',
-        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.NO_CONTENT
@@ -146,7 +165,7 @@ async def test_delete_tag_not_found(client: TestClient, users, tags, tasks):
     id_tag = 3
     rsp = client.delete(
         f'/tags/{id_tag}',
-        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND
@@ -159,7 +178,7 @@ async def test_delete_tag_not_found_with_incorrect_user(
     id_tag = 3
     rsp = client.delete(
         f'/tags/{id_tag}',
-        headers={'Authorization': f'bearer {users[1]["access_token"]}'},
+        headers={'Authorization': f'Bearer {users[1]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND

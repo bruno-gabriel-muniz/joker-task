@@ -36,7 +36,6 @@ async def create_tag(
     for tag in tags_db:
         await session.refresh(tag)
 
-    logger.info(f'Mapping response for {user.email}')
     return [mapper.map_tag_public(tag_db) for tag_db in tags_db]
 
 
@@ -75,7 +74,6 @@ async def update_tag(  # noqa: PLR0913, PLR0917
     await session.commit()
     await session.refresh(tag_db)
 
-    logger.info(f'Tag {id} updated for user {user.email}')
     return mapper.map_tag_public(tag_db)
 
 
@@ -86,6 +84,7 @@ async def delete_tag(
     tags_ctrl: T_TagController,
     session: T_Session,
 ):
+    logger.info(f'Deleting tag {id} for user {user.email}')
     tag_db = await tags_ctrl.collect_tag_by_id(user, id)
 
     await session.delete(tag_db)
