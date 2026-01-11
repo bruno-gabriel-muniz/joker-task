@@ -74,6 +74,8 @@ O projeto está em evolução contínua, com foco em **qualidade de código**, *
 
 **Requisitos**: Python 3.13 e Poetry.
 
+> O projeto foi pensado para ser usado via API (Swagger disponível em /docs).
+
 #### Como instalar as dependências?
 ```
 poetry install
@@ -113,11 +115,13 @@ poetry run task format
 │ ├── router
 │ │ ├── auth.py
 │ │ ├── tasks.py
-│ │ └── tags.py
+│ │ ├── tags.py
+│ │ └── workbenches.py
 │ ├── service
 │ │ ├── security.py
 │ │ ├── task_collector.py
-│ │ ├── tags_controler.py
+│ │ ├── tags_controller.py
+│ │ ├── workbench_controller.py
 │ │ ├── make_filters.py
 │ │ └── mapper.py
 │ ├── interfaces
@@ -139,7 +143,55 @@ poetry run task format
 
 ## Arquitetura
 
-<img src="https://i.ibb.co/tPZNP6BZ/diagrama-de-modulos.png" alt="diagrama de modulos" border="0">
+```mermaid
+---
+config:
+  theme: dark
+---
+flowchart TD
+    User[Cliente / Usuário] --> Router
+
+    subgraph Router Camada HTTP FastAPI Routers
+        AuthRouter[auth]
+        TaskRouter[tasks]
+        TagRouter[tags]
+        WorkbenchRouter[workbenches]
+    end
+    Router --> Services
+
+    subgraph Services Application Services
+        Security[security]
+        TaskCollector[task_collector]
+        TagController[tags_controller]
+        WorkbenchController[workbench_controller]
+        FilterFactory[make_filters]
+    end
+    AuthRouter --> Security
+
+    TaskRouter --> TaskCollector
+    TaskRouter --> TagController
+    TaskRouter --> WorkbenchController
+
+    TagRouter --> TagController
+    WorkbenchRouter --> WorkbenchController
+
+    TaskCollector --> FilterFactory
+    Services --> ORM
+
+    subgraph ORM Camada de Persistência
+        Models[SQLAlchemy Models]
+        DB[(Database)]
+    end
+
+    Models --> DB
+    Services --> Mapper
+
+    subgraph Mapper Mapper
+        PublicSchemas[Public Schemas DTOs]
+    end
+
+    Mapper --> Router
+```
 
 ### Principais módulos
 
@@ -153,7 +205,9 @@ poetry run task format
 
 - **make_filters**: Camada que traduz os filtros para expressão SQL, utilizando o padrão *Factory*
 
-- **tags_controler**: Gerencia criação, reutilização, atualização e associação de tags por usuário.
+- **tags_controller**: Gerencia criação, reutilização, verificação de conflitos e associação de tags com as tasks.
+
+- **workbench_controller**: Gerencia coleta, verificação de conflitos e associação de workbenches com as tasks.
 
 - **mapper**: Converte modelos ORM em schemas públicos, desacoplando banco de dados da API.
 
@@ -163,8 +217,9 @@ poetry run task format
 
 - `User → auth → security`
 - `User → tasks → task_collector → mapper`
-- `User → tasks → (tags_controler, task_collector) → mapper`
-- `User → tags → tags_controler → mapper`
+- `User → tasks → (tags_controller, task_collector, workbench_controller) → mapper`
+- `User → tags → tags_controller → mapper`
+- `User → workbenches → workbench_controller → mapper`
 
 ---
 
@@ -174,7 +229,7 @@ poetry run task format
 - [X] Sistema de Logs
 - [X] CRUD de Tasks
 - [X] Router Tags
-- [ ] Integração com Workbenches
+- [X] Integração com Workbenches
 - [ ] Filtros mais avançados (views reutilizáveis)
 - [ ] Evolução do domínio de Tags
 - [ ] Refatorações e melhorias arquiteturais contínuas
