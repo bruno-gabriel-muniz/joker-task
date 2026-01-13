@@ -20,7 +20,7 @@ class TagController(TagControllerInterface):
     async def get_or_create_tags(
         self, user: User, tag_names: Sequence[str] | None
     ) -> list[Tag]:
-        logger.info('getting or creating tags')
+        logger.info(f'getting or creating tags for user: {user.email}')
 
         if not tag_names:
             return []
@@ -32,10 +32,13 @@ class TagController(TagControllerInterface):
             for tag_name in tag_names
         ]
 
+        logger.info(
+            f'got or created {len(result)} tags for user: {user.email}'
+        )
         return result
 
     async def collect_tag_by_id(self, user: User, id: int) -> Tag:
-        logger.info(f'collecting tag with id = {id}')
+        logger.info(f'collecting tag with id = {id} for user {user.email}')
         tag = await self.session.scalar(
             select(Tag).where(
                 Tag.user_email == user.email,
@@ -82,7 +85,10 @@ class TagController(TagControllerInterface):
         tags_add: Sequence[str] | None,
         tags_remove: Sequence[str] | None,
     ) -> None:
-        logger.info('updating tags of task with id = {task.id_task}')
+        logger.info(
+            f'updating tags of task with id = {task.id_task} '
+            + f'for user {user.email}'
+        )
         current_tags = {tag.name for tag in task.tags}
 
         if tags_add:
@@ -102,9 +108,9 @@ class TagController(TagControllerInterface):
 
         if not tag:
             tag = Tag(tag_name, user.email, user)
-            logger.info(f'creating new tag: {tag_name}')
+            logger.debug(f'creating new tag: {tag_name}')
             self.session.add(tag)
         else:
-            logger.info(f'tag found: {tag_name}')
+            logger.debug(f'tag found: {tag_name}')
 
         return tag

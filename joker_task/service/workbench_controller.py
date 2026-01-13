@@ -20,7 +20,11 @@ class WorkbenchController(WorkbenchControllerInterface):
     async def collect_workbench_by_id(
         self, user: User, id_workbench: int
     ) -> Workbench:
-        logger.info(f'collecting workbenches with id: {id_workbench}')
+        logger.info(
+            'collecting workbenches with id: '
+            + f'{id_workbench} for user: {user.email}'
+        )
+
         workbench_db = await self.session.scalar(
             select(Workbench).where(
                 Workbench.user_email == user.email,
@@ -36,7 +40,10 @@ class WorkbenchController(WorkbenchControllerInterface):
     async def collect_workbenches_by_id(
         self, user: User, id_workbenches: Sequence[int]
     ) -> Sequence[Workbench]:
-        logger.info(f'collecting workbenches by id: {id_workbenches}')
+        logger.info(
+            'collecting workbenches by id: '
+            + f'{id_workbenches} for user: {user.email}'
+        )
 
         result = await self.session.execute(
             select(Workbench).where(
@@ -80,7 +87,9 @@ class WorkbenchController(WorkbenchControllerInterface):
         return result.scalars().all()
 
     async def check_workbench_name_exists(self, user: User, name: str) -> None:
-        logger.info(f'checking workbench name conflict: {name}')
+        logger.info(
+            f'checking workbench name conflict: {name} for user: {user.email}'
+        )
         have_conflict = await self.session.scalar(
             select(Workbench).where(
                 Workbench.name == name,
@@ -99,7 +108,10 @@ class WorkbenchController(WorkbenchControllerInterface):
         workbenches_add: Sequence[int] | None,
         workbenches_remove: Sequence[int] | None,
     ) -> None:
-        logger.info(f'updating workbenches of task id: {task.id_task}')
+        logger.info(
+            'updating workbenches of task id: '
+            + f'{task.id_task} for user: {user.email}'
+        )
         current_workbenches = {
             workbench.id_workbench for workbench in task.workbenches
         }

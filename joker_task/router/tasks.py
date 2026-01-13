@@ -1,7 +1,6 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter
-from loguru import logger
 
 from joker_task.db.models import Task
 from joker_task.schemas import (
@@ -39,7 +38,6 @@ async def create_task(  # noqa: PLR0913, PLR0917
         user, task.workbenches
     )
 
-    logger.info('creating the new task')
     task_db = Task(
         user_email=user.email,
         user=user,
@@ -54,13 +52,11 @@ async def create_task(  # noqa: PLR0913, PLR0917
         priority=task.priority,
     )
 
-    logger.info('saving the task to the db')
     session.add(task_db)
 
     await session.commit()
     await session.refresh(task_db)
 
-    logger.info('returning the task')
     return mapper.map_task_public(task_db)
 
 
@@ -73,7 +69,6 @@ async def get_task_by_id(
     collector: T_CollectorTask,
     mapper: T_Mapper,
 ):
-    logger.info('collecting tasks by id')
     task = await collector.collect_task_by_id(user, id_task)
     return mapper.map_task_public(task)
 
@@ -85,8 +80,6 @@ async def get_tasks_by_filters(
     collector: T_CollectorTask,
     mapper: T_Mapper,
 ):
-    logger.info('collecting task by filters')
-
     tasks = await collector.collect_task_by_filter(user, filter)
 
     tasks_rsp = [mapper.map_task_public(task) for task in tasks]
@@ -109,8 +102,6 @@ async def update_task(  # noqa: PLR0913, PLR0917
 ):
     task_db = await collector.collect_task_by_id(user, id)
 
-    logger.info(f'updating task with id = {id}')
-
     await tag_controler.update_tags_of_task(
         user, task_db, task.tags_add, task.tags_remove
     )
@@ -126,7 +117,6 @@ async def update_task(  # noqa: PLR0913, PLR0917
     ).items():
         setattr(task_db, key, value)
 
-    logger.info('updating db')
     session.add(task_db)
 
     await session.commit()
@@ -145,6 +135,5 @@ async def delete_task(
 ):
     task_db = await collector.collect_task_by_id(user, id)
 
-    logger.info(f'deleting task with id  = {id}')
     await session.delete(task_db)
     await session.commit()

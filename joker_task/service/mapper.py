@@ -16,20 +16,18 @@ class Mapper(MapperInterface):
 
     @staticmethod
     def map_user_public(user_db: User) -> UserPublic:
-        logger.info(f'Mapping user {user_db.email} to UserPublic schema')
+        logger.debug(f'mapping user {user_db.email} to UserPublic')
 
-        user_rsp = UserPublic(
+        return UserPublic(
             email=user_db.email,
             username=user_db.username,
         )
 
-        return user_rsp
-
     @staticmethod
     def map_task_public(task_db: Task) -> TaskPublic:
-        logger.info(f'Mapping task {task_db.id_task} to TaskPublic schema')
+        logger.debug(f'mapping task {task_db.id_task} to TaskPublic')
 
-        task_rsp = TaskPublic(
+        return TaskPublic(
             title=task_db.title,
             description=task_db.description,
             done=task_db.done,
@@ -47,15 +45,16 @@ class Mapper(MapperInterface):
             updated_at=task_db.updated_at,
         )
 
-        return task_rsp
-
     @staticmethod
     def map_tag_str(tag_db: Tag) -> str:
+        logger.debug(f'mapping tag {tag_db.id_tag} to str')
         return tag_db.name
 
     @staticmethod
     def map_tag_public(tag_db: Tag) -> TagPublic:
-        tag_rsp = TagPublic(
+        logger.debug(f'mapping tag {tag_db.id_tag} to TagPublic')
+
+        return TagPublic(
             name=tag_db.name,
             id_tag=tag_db.id_tag,
             user_email=tag_db.user_email,
@@ -63,10 +62,11 @@ class Mapper(MapperInterface):
             updated_at=tag_db.updated_at,
         )
 
-        return tag_rsp
-
     @staticmethod
     def map_workbench_public(workbench_db: Workbench) -> WorkbenchPublic:
+        logger.debug(
+            f'mapping workbench {workbench_db.id_workbench} to WorkbenchPublic'
+        )
         return WorkbenchPublic(
             name=workbench_db.name,
             columns=workbench_db.columns,

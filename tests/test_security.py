@@ -3,6 +3,7 @@ from http import HTTPStatus
 
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
+from jwt import encode
 
 from joker_task.service.security import (
     generate_access_token,
@@ -45,11 +46,16 @@ def test_get_user_token_expired(client: TestClient, users):
     assert data['detail'] == 'could not validate credentials'
 
 
-def test_get_user_token_without_user(client: TestClient):
+def test_get_user_token_without_user(client: TestClient, settings):
+    token = encode(
+        {'exp': datetime.now() + timedelta(days=1)},
+        settings.SECRET_KEY,
+        settings.ALGORITHM,
+    )
     rsp = client.put(
         '/update_user/',
         json={'username': 'bob', 'password': 'secret'},
-        headers={'Authorization': f'bearer {generate_access_token({})}'},
+        headers={'Authorization': f'bearer {token}'},
     )
 
     assert rsp.status_code == HTTPStatus.UNAUTHORIZED

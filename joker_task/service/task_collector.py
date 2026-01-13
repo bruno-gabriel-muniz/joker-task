@@ -18,7 +18,9 @@ class TaskCollector(TaskCollectorInterface):
         self.session = session
 
     async def collect_task_by_id(self, user: User, id_task: int) -> Task:
-        logger.info(f'collecting task with id = {id_task}')
+        logger.info(
+            f'collecting task with id = {id_task} for user {user.email}'
+        )
         task = await self.session.scalar(
             select(Task).where(
                 Task.user_email == user.email, Task.id_task == id_task
@@ -31,13 +33,13 @@ class TaskCollector(TaskCollectorInterface):
     async def collect_task_by_filter(
         self, user: User, filter: Filter
     ) -> list[Task]:
+        logger.info(f'collecting tasks for user {user.email} with filter')
         filter_sql = select(Task).where(Task.user_email == user.email)
 
         for campo in filter.model_fields:
-            logger.info(f'making filter of {campo}')
             filter_sql = self._make_filter(campo, filter, filter_sql)
 
-        logger.info('searching tasks')
+        logger.debug('searching tasks')
         result: list[Task] = list(
             (await self.session.scalars(filter_sql)).all()
         )
@@ -51,7 +53,7 @@ class TaskCollector(TaskCollectorInterface):
         if not getattr(filter, campo) or not (
             field_info and field_info.json_schema_extra
         ):
-            logger.info('returning filter_sql unchanged')
+            logger.debug('returning filter_sql unchanged')
             return filter_sql
 
         logger.info(f'updating filter with {campo}')

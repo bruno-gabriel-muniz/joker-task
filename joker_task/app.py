@@ -19,6 +19,7 @@ logger.add(
 logger.add('app.log', level='DEBUG', rotation='1 MB')
 
 
+logger.info('starting api...')
 app = FastAPI()
 app.include_router(auth_router)
 app.include_router(tasks_router)

@@ -33,7 +33,7 @@ def verify_password(password: str, hash: str) -> bool:
 
 
 def generate_access_token(data: dict) -> str:
-    logger.info('generating access token')
+    logger.info(f'generating access token for user: {data["sub"]}')
     settings = Settings()  # type: ignore
 
     to_encode = data.copy()
@@ -53,10 +53,9 @@ async def get_user(token: T_OAuth2PB, session: T_Session):
         detail='could not validate credentials',
         headers={'WWW-Authenticate': 'Bearer'},
     )
-
     settings = Settings()  # type: ignore
+    logger.debug('verifying access token')
 
-    logger.info('reading the token')
     try:
         payload = decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
@@ -64,21 +63,21 @@ async def get_user(token: T_OAuth2PB, session: T_Session):
         subject_email = payload.get('sub')
 
         if not subject_email:
-            logger.info('invalid token, returnig the error')
+            logger.info('token verification failed: no subject email')
             raise credentials_exception
 
     except (DecodeError, ExpiredSignatureError):
-        logger.info('invalid token, returnig the error')
+        logger.info('token verification failed: decode or expired error')
         raise credentials_exception
 
-    logger.info('retrieving the user from the database')
+    logger.debug('retrieving the user from the database')
     user = await session.scalar(
         select(User).where(User.email == subject_email)
     )
 
     if not user:
-        logger.info('user not found, returning an error')
+        logger.info('token verification failed: user not found')
         raise credentials_exception
 
-    logger.info('returnig the user')
+    logger.info(f'token verified successfully for user: {user.email}')
     return user

@@ -1,7 +1,6 @@
 from http import HTTPStatus
 
 from fastapi import APIRouter
-from loguru import logger
 
 from joker_task.schemas import (
     TagPublic,
@@ -28,7 +27,6 @@ async def create_tag(
     tags_ctrl: T_TagController,
     mapper: T_Mapper,
 ):
-    logger.info(f'Creating tags for user {user.email}')
     tags_db = await tags_ctrl.get_or_create_tags(user, tags.names)
 
     await session.commit()
@@ -47,7 +45,6 @@ async def list_tags(
 ):
     tags_db = await tags_ctrl.collect_tags(user)
 
-    logger.info(f'Listing tags for user {user.email}')
     return [mapper.map_tag_public(tag) for tag in tags_db]
 
 
@@ -62,7 +59,6 @@ async def update_tag(  # noqa: PLR0913, PLR0917
     tags_ctrl: T_TagController,
     mapper: T_Mapper,
 ):
-    logger.info(f'Updating tag {id} for user {user.email}')
     await tags_ctrl.check_tag_name_exists(user, data.name, id)
 
     tag_db = await tags_ctrl.collect_tag_by_id(user, id)
@@ -84,7 +80,6 @@ async def delete_tag(
     tags_ctrl: T_TagController,
     session: T_Session,
 ):
-    logger.info(f'Deleting tag {id} for user {user.email}')
     tag_db = await tags_ctrl.collect_tag_by_id(user, id)
 
     await session.delete(tag_db)

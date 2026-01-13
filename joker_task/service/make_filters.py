@@ -31,6 +31,7 @@ def factory_make_filter(type: Any) -> StrategyMakeFilterInterface:
         logger.warning(f'type unknown: {type}')
         raise ValueError('value not found in dict_type_strategy')
 
+    logger.debug(f'factory_make_filter type: {type}')
     return dict_type_strategy[type]()
 
 
