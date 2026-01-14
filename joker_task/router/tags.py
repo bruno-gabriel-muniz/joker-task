@@ -10,7 +10,7 @@ from joker_task.schemas import (
 from joker_task.service.dependencies import (
     T_Mapper,
     T_Session,
-    T_TagController,
+    T_TagService,
     T_User,
 )
 
@@ -24,10 +24,10 @@ async def create_tag(
     tags: TagsSchema,
     user: T_User,
     session: T_Session,
-    tags_ctrl: T_TagController,
+    tags_srv: T_TagService,
     mapper: T_Mapper,
 ):
-    tags_db = await tags_ctrl.get_or_create_tags(user, tags.names)
+    tags_db = await tags_srv.get_or_create_tags(user, tags.names)
 
     await session.commit()
 
@@ -40,10 +40,8 @@ async def create_tag(
 @tags_router.get(
     '/', response_model=list[TagPublic], status_code=HTTPStatus.OK
 )
-async def list_tags(
-    user: T_User, tags_ctrl: T_TagController, mapper: T_Mapper
-):
-    tags_db = await tags_ctrl.collect_tags(user)
+async def list_tags(user: T_User, tags_srv: T_TagService, mapper: T_Mapper):
+    tags_db = await tags_srv.collect_tags(user)
 
     return [mapper.map_tag_public(tag) for tag in tags_db]
 
@@ -56,12 +54,12 @@ async def update_tag(  # noqa: PLR0913, PLR0917
     data: TagUpdate,
     user: T_User,
     session: T_Session,
-    tags_ctrl: T_TagController,
+    tags_srv: T_TagService,
     mapper: T_Mapper,
 ):
-    await tags_ctrl.check_tag_name_exists(user, data.name, id)
+    await tags_srv.check_tag_name_exists(user, data.name, id)
 
-    tag_db = await tags_ctrl.collect_tag_by_id(user, id)
+    tag_db = await tags_srv.collect_tag_by_id(user, id)
 
     tag_db.name = data.name
 
@@ -77,10 +75,10 @@ async def update_tag(  # noqa: PLR0913, PLR0917
 async def delete_tag(
     id: int,
     user: T_User,
-    tags_ctrl: T_TagController,
+    tags_srv: T_TagService,
     session: T_Session,
 ):
-    tag_db = await tags_ctrl.collect_tag_by_id(user, id)
+    tag_db = await tags_srv.collect_tag_by_id(user, id)
 
     await session.delete(tag_db)
     await session.commit()

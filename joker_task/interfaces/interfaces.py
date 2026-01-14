@@ -31,7 +31,7 @@ class StrategyMakeFilterInterface(ABC):
         pass  # pragma: no cover
 
 
-class TagControllerInterface(ABC):
+class TagServiceInterface(ABC):
     @abstractmethod
     async def get_or_create_tags(
         self, user: User, tag_names: Sequence[str] | None
@@ -63,7 +63,7 @@ class TagControllerInterface(ABC):
         pass  # pragma: no cover
 
 
-class WorkbenchControllerInterface(ABC):
+class WorkbenchServiceInterface(ABC):
     @abstractmethod
     async def collect_workbench_by_id(
         self, user: User, id_workbench: int

@@ -13,7 +13,7 @@ from joker_task.service.dependencies import (
     T_Mapper,
     T_Session,
     T_User,
-    T_WorkbenchController,
+    T_WorkbenchService,
 )
 
 workbenches_router = APIRouter(prefix='/workbenches', tags=['workbenches'])
@@ -25,11 +25,11 @@ workbenches_router = APIRouter(prefix='/workbenches', tags=['workbenches'])
 async def create_workbench(
     workbench: WorkbenchSchema,
     user: T_User,
-    workbench_ctrl: T_WorkbenchController,
+    workbench_srv: T_WorkbenchService,
     session: T_Session,
     mapper: T_Mapper,
 ):
-    await workbench_ctrl.check_workbench_name_exists(user, workbench.name)
+    await workbench_srv.check_workbench_name_exists(user, workbench.name)
 
     workbench_db = Workbench(
         user_email=user.email,
@@ -48,9 +48,9 @@ async def create_workbench(
     '/', response_model=list[WorkbenchPublic], status_code=HTTPStatus.OK
 )
 async def list_workbenches(
-    user: T_User, workbench_ctrl: T_WorkbenchController, mapper: T_Mapper
+    user: T_User, workbench_srv: T_WorkbenchService, mapper: T_Mapper
 ):
-    workbenches_db = await workbench_ctrl.collect_workbenches(user)
+    workbenches_db = await workbench_srv.collect_workbenches(user)
 
     return [
         mapper.map_workbench_public(workbench) for workbench in workbenches_db
@@ -65,10 +65,10 @@ async def list_workbenches(
 async def get_workbench(
     id: int,
     user: T_User,
-    workbench_ctrl: T_WorkbenchController,
+    workbench_srv: T_WorkbenchService,
     mapper: T_Mapper,
 ):
-    workbench_db = await workbench_ctrl.collect_workbench_by_id(user, id)
+    workbench_db = await workbench_srv.collect_workbench_by_id(user, id)
 
     return {
         'workbench': mapper.map_workbench_public(workbench_db),
@@ -84,10 +84,10 @@ async def update_workbench(  # noqa: PLR0913, PLR0917
     workbench: WorkbenchUpdate,
     user: T_User,
     session: T_Session,
-    workbench_ctrl: T_WorkbenchController,
+    workbench_srv: T_WorkbenchService,
     mapper: T_Mapper,
 ):
-    workbench_db = await workbench_ctrl.collect_workbench_by_id(user, id)
+    workbench_db = await workbench_srv.collect_workbench_by_id(user, id)
 
     updated_columns = {column for column in workbench_db.columns}
     if workbench.columns_add:
@@ -97,7 +97,7 @@ async def update_workbench(  # noqa: PLR0913, PLR0917
     workbench_db.columns = sorted(list(updated_columns))
 
     if workbench.name and workbench.name != workbench_db.name:
-        await workbench_ctrl.check_workbench_name_exists(user, workbench.name)
+        await workbench_srv.check_workbench_name_exists(user, workbench.name)
         workbench_db.name = workbench.name
 
     session.add(workbench_db)
@@ -112,9 +112,9 @@ async def delete_workbench(
     id: int,
     user: T_User,
     session: T_Session,
-    workbench_ctrl: T_WorkbenchController,
+    workbench_srv: T_WorkbenchService,
 ):
-    workbench_db = await workbench_ctrl.collect_workbench_by_id(user, id)
+    workbench_db = await workbench_srv.collect_workbench_by_id(user, id)
 
     await session.delete(workbench_db)
     await session.commit()

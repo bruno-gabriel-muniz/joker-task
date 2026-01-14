@@ -8,12 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from joker_task.db.database import get_session
 from joker_task.db.models import Tag, Task, User
-from joker_task.interfaces.interfaces import TagControllerInterface
+from joker_task.interfaces.interfaces import TagServiceInterface
 
 T_Session = Annotated[AsyncSession, Depends(get_session)]
 
 
-class TagController(TagControllerInterface):
+class TagService(TagServiceInterface):
     def __init__(self, session: T_Session):
         self.session = session
 

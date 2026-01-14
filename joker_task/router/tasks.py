@@ -14,9 +14,9 @@ from joker_task.service.dependencies import (
     T_Filter,
     T_Mapper,
     T_Session,
-    T_TagController,
+    T_TagService,
     T_User,
-    T_WorkbenchController,
+    T_WorkbenchService,
 )
 
 tasks_router = APIRouter(prefix='/tasks', tags=['tasks'])
@@ -29,12 +29,12 @@ async def create_task(  # noqa: PLR0913, PLR0917
     task: TaskSchema,
     session: T_Session,
     user: T_User,
-    tag_controler: T_TagController,
-    workbench_controler: T_WorkbenchController,
+    tag_srv: T_TagService,
+    workbench_srv: T_WorkbenchService,
     mapper: T_Mapper,
 ):
-    tags_db = await tag_controler.get_or_create_tags(user, task.tags)
-    workbenches_db = await workbench_controler.collect_workbenches_by_id(
+    tags_db = await tag_srv.get_or_create_tags(user, task.tags)
+    workbenches_db = await workbench_srv.collect_workbenches_by_id(
         user, task.workbenches
     )
 
@@ -95,19 +95,19 @@ async def update_task(  # noqa: PLR0913, PLR0917
     task: TaskUpdate,
     user: T_User,
     session: T_Session,
-    tag_controler: T_TagController,
-    workbench_controler: T_WorkbenchController,
+    tag_srv: T_TagService,
+    workbench_srv: T_WorkbenchService,
     collector: T_CollectorTask,
     mapper: T_Mapper,
 ):
     task_db = await collector.collect_task_by_id(user, id)
 
-    await tag_controler.update_tags_of_task(
+    await tag_srv.update_tags_of_task(
         user, task_db, task.tags_add, task.tags_remove
     )
     task.tags_add = task.tags_remove = None
 
-    await workbench_controler.update_workbenches_of_task(
+    await workbench_srv.update_workbenches_of_task(
         user, task_db, task.workbenches_add, task.workbenches_remove
     )
     task.workbenches_add = task.workbenches_remove = None
