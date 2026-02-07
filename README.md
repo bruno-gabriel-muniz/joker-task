@@ -120,8 +120,8 @@ poetry run task format
 │ ├── service
 │ │ ├── security.py
 │ │ ├── task_collector.py
-│ │ ├── tags_controller.py
-│ │ ├── workbench_controller.py
+│ │ ├── tags_service.py
+│ │ ├── workbench_service.py
 │ │ ├── make_filters.py
 │ │ └── mapper.py
 │ ├── interfaces
@@ -162,18 +162,18 @@ flowchart TD
     subgraph Services Application Services
         Security[security]
         TaskCollector[task_collector]
-        TagController[tags_controller]
-        WorkbenchController[workbench_controller]
+        TagService[tags_service]
+        WorkbenchService[workbench_service]
         FilterFactory[make_filters]
     end
     AuthRouter --> Security
 
     TaskRouter --> TaskCollector
-    TaskRouter --> TagController
-    TaskRouter --> WorkbenchController
+    TaskRouter --> TagService
+    TaskRouter --> WorkbenchService
 
-    TagRouter --> TagController
-    WorkbenchRouter --> WorkbenchController
+    TagRouter --> TagService
+    WorkbenchRouter --> WorkbenchService
 
     TaskCollector --> FilterFactory
     Services --> ORM
@@ -205,9 +205,9 @@ flowchart TD
 
 - **make_filters**: Camada que traduz os filtros para expressão SQL, utilizando o padrão *Factory*
 
-- **tags_controller**: Gerencia criação, reutilização, verificação de conflitos e associação de tags com as tasks.
+- **tags_service**: Gerencia criação, reutilização, verificação de conflitos e associação de tags com as tasks.
 
-- **workbench_controller**: Gerencia coleta, verificação de conflitos e associação de workbenches com as tasks.
+- **workbench_service**: Gerencia coleta, verificação de conflitos e associação de workbenches com as tasks.
 
 - **mapper**: Converte modelos ORM em schemas públicos, desacoplando banco de dados da API.
 
@@ -217,9 +217,9 @@ flowchart TD
 
 - `User → auth → security`
 - `User → tasks → task_collector → mapper`
-- `User → tasks → (tags_controller, task_collector, workbench_controller) → mapper`
-- `User → tags → tags_controller → mapper`
-- `User → workbenches → workbench_controller → mapper`
+- `User → tasks → (tags_service, task_collector, workbench_service) → mapper`
+- `User → tags → tags_service → mapper`
+- `User → workbenches → workbench_service → mapper`
 
 ---
 
