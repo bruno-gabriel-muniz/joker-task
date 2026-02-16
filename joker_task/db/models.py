@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List
+from typing import List, Sequence
 
 from sqlalchemy import (
     JSON,
@@ -32,6 +32,9 @@ class User:
     tags: Mapped[List['Tag']] = relationship(back_populates='user', init=False)
 
     workbenches: Mapped[List['Workbench']] = relationship(
+        back_populates='user', init=False
+    )
+    views: Mapped[List['View']] = relationship(
         back_populates='user', init=False
     )
 
@@ -164,6 +167,70 @@ class Workbench:
     id_workbench: Mapped[int] = mapped_column(
         Integer, primary_key=True, init=False, autoincrement=True
     )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        init=False,
+        server_default=func.now(),
+        server_onupdate=func.now(),
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, init=False, server_default=func.now()
+    )
+
+
+@table_registry.mapped_as_dataclass
+class View:
+    __tablename__ = 'views'
+    __table_args__ = (UniqueConstraint('user_email', 'name'),)
+
+    user_email: Mapped[str] = mapped_column(ForeignKey('users.email'))
+    user: Mapped['User'] = relationship(back_populates='views')
+
+    name: Mapped[str] = mapped_column(String, nullable=False)
+    filters: Mapped[List['Filter']] = relationship(
+        back_populates='view', init=False
+    )
+    id_view: Mapped[int] = mapped_column(
+        Integer, primary_key=True, init=False, autoincrement=True
+    )
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        init=False,
+        server_default=func.now(),
+        server_onupdate=func.now(),
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, init=False, server_default=func.now()
+    )
+
+
+@table_registry.mapped_as_dataclass
+class Filter:
+    __tablename__ = 'filters'
+
+    id_view: Mapped[int] = mapped_column(ForeignKey('views.id_view'))
+    view: Mapped['View'] = relationship(back_populates='filters')
+
+    id_filter: Mapped[int] = mapped_column(
+        Integer, primary_key=True, init=False, autoincrement=True
+    )
+    title: Mapped[str | None] = mapped_column(String, nullable=True)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
+    done: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    tags: Mapped[Sequence[str]] = mapped_column(JSON, nullable=True)
+    reminder: Mapped[Sequence[str | None] | None] = mapped_column(
+        JSON, nullable=True
+    )
+    repetition: Mapped[str | None] = mapped_column(String, nullable=True)
+    state: Mapped[Sequence[str | None]] = mapped_column(JSON, nullable=True)
+    priority: Mapped[tuple[int | None, int | None]] = mapped_column(
+        JSON, nullable=True
+    )
+
+    offset: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    limit: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,

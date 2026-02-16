@@ -3,12 +3,14 @@ from typing import Any, Sequence
 
 from sqlalchemy import Select
 
-from joker_task.db.models import Tag, Task, User, Workbench
+from joker_task.db.models import Tag, Task, User, View, Workbench
 from joker_task.schemas import (
-    Filter,
+    FilterSchema,
     TagPublic,
     TaskPublic,
     UserPublic,
+    ViewPublic,
+    ViewSchema,
     WorkbenchPublic,
 )
 
@@ -20,7 +22,7 @@ class TaskCollectorInterface(ABC):
 
     @abstractmethod
     async def collect_task_by_filter(
-        self, user: User, filter: Filter
+        self, user: User, filter: FilterSchema
     ) -> list[Task]:
         pass  # pragma: no cover
 
@@ -95,6 +97,12 @@ class WorkbenchServiceInterface(ABC):
         pass  # pragma: no cover
 
 
+class ViewServiceInterface(ABC):
+    @abstractmethod
+    async def create_view(self, user: User, view_schema: ViewSchema) -> View:
+        pass  # pragma: no cover
+
+
 class MapperInterface(ABC):
     @staticmethod
     @abstractmethod
@@ -119,4 +127,9 @@ class MapperInterface(ABC):
     @staticmethod
     @abstractmethod
     def map_workbench_public(workbench_db: Workbench) -> WorkbenchPublic:
+        pass  # pragma: no cover
+
+    @staticmethod
+    @abstractmethod
+    def map_view_public(view_db: View) -> ViewPublic:
         pass  # pragma: no cover

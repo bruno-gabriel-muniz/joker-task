@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from joker_task.db.database import get_session
 from joker_task.db.models import Task, User
 from joker_task.interfaces.interfaces import TaskCollectorInterface
-from joker_task.schemas import Filter
+from joker_task.schemas import FilterSchema
 from joker_task.service.make_filters import factory_make_filter
 
 
@@ -31,7 +31,7 @@ class TaskCollector(TaskCollectorInterface):
         return task
 
     async def collect_task_by_filter(
-        self, user: User, filter: Filter
+        self, user: User, filter: FilterSchema
     ) -> list[Task]:
         logger.info(f'collecting tasks for user {user.email} with filter')
         filter_sql = select(Task).where(Task.user_email == user.email)
@@ -47,7 +47,9 @@ class TaskCollector(TaskCollectorInterface):
         return result
 
     @staticmethod
-    def _make_filter(campo: str, filter: Filter, filter_sql: Select) -> Select:
+    def _make_filter(
+        campo: str, filter: FilterSchema, filter_sql: Select
+    ) -> Select:
         field_info = filter.__class__.model_fields.get(campo)
 
         if not getattr(filter, campo) or not (

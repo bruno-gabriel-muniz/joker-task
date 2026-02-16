@@ -83,7 +83,7 @@ class FilterLogicRange(StrategyMakeFilterInterface):
 
     @staticmethod
     def make(
-        cur_filter: Select, values: tuple[Any, Any, Any], campo: str
+        cur_filter: Select, values: tuple[Any, Any], campo: str
     ) -> Select:
         if start := values[0]:
             cur_filter = cur_filter.where(getattr(Task, campo) >= start)

@@ -8,7 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from joker_task.app import app
 from joker_task.db.database import get_session
-from joker_task.db.models import Tag, Task, User, Workbench, table_registry
+from joker_task.db.models import (
+    Tag,
+    Task,
+    User,
+    View,
+    Workbench,
+    table_registry,
+)
 from joker_task.service.security import (
     generate_access_token,
     get_hash_password,
@@ -151,6 +158,53 @@ async def workbenches(session: AsyncSession, users) -> list[dict[str, Any]]:
     session.add(workbench1_obj)
     session.add(workbench2_obj)
     session.add(workbench3_obj)
+    await session.commit()
+
+    return out
+
+
+@pytest_asyncio.fixture
+async def views(session: AsyncSession, users) -> list[dict[str, Any]]:
+    users_in_db = (
+        await session.scalars(select(User).order_by(User.email))
+    ).all()
+
+    view1 = {
+        'name': 'view1',
+        'user_email': users[0]['email'],
+        'id_view': 1,
+    }
+    view2 = {
+        'name': 'view2',
+        'user_email': users[0]['email'],
+        'id_view': 2,
+    }
+    view3 = {
+        'name': 'view3',
+        'user_email': users[1]['email'],
+        'id_view': 3,
+    }
+
+    out = [view1, view2, view3]
+
+    view1_obj = View(
+        name=view1['name'],
+        user_email=users[0]['email'],
+        user=users_in_db[0],
+    )
+    view2_obj = View(
+        name=view2['name'],
+        user_email=users[0]['email'],
+        user=users_in_db[0],
+    )
+    view3_obj = View(
+        name=view3['name'],
+        user_email=users[1]['email'],
+        user=users_in_db[1],
+    )
+    session.add(view1_obj)
+    session.add(view2_obj)
+    session.add(view3_obj)
     await session.commit()
 
     return out

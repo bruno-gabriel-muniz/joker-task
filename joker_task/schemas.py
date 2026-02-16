@@ -111,7 +111,7 @@ class FilterPage(BaseModel):
     limit: int = Field(100, ge=1)
 
 
-class Filter(FilterPage):
+class FilterSchema(FilterPage):
     title: str | None = Field(
         default=None, json_schema_extra={'search_logic': LOGIC_LIKE}
     )
@@ -121,7 +121,7 @@ class Filter(FilterPage):
     done: bool | None = Field(
         default=None, json_schema_extra={'search_logic': LOGIC_EXACT}
     )
-    tags: list[str] | None = Field(
+    tags: Sequence[str] | None = Field(
         default=None, json_schema_extra={'search_logic': LOGIC_WITH_TAGS}
     )
     reminder: tuple[datetime | None, datetime | None] | None = Field(
@@ -130,12 +130,24 @@ class Filter(FilterPage):
     repetition: str | None = Field(
         default=None, json_schema_extra={'search_logic': LOGIC_EXACT}
     )
-    state: list[str] | None = Field(
+    state: Sequence[str] | None = Field(
         default=None, json_schema_extra={'search_logic': LOGIC_IN_LIST}
     )
     priority: tuple[int | None, int | None] | None = Field(
         default=None, json_schema_extra={'search_logic': LOGIC_RANGE}
     )
+
+
+class ViewSchema(BaseModel):
+    name: str
+    filters: list[FilterSchema] = Field(default_factory=list)
+
+
+class ViewPublic(ViewSchema):
+    id_view: int
+    user_email: EmailStr
+    created_at: datetime
+    updated_at: datetime
 
 
 class ResponseTasks(BaseModel):
