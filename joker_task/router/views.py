@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 from fastapi import APIRouter
 
-from joker_task.schemas import ViewPublic, ViewSchema
+from joker_task.schemas import ViewPublic, ViewSchema, ViewSoft
 from joker_task.service.dependencies import (
     T_Mapper,
     T_Session,
@@ -29,3 +29,14 @@ async def create_view(
     await session.refresh(view_db, attribute_names=['filters'])
 
     return mapper.map_view_public(view_db)
+
+
+@views_router.get('/', response_model=list[ViewSoft])
+async def list_views(
+    user: T_User,
+    view_srv: T_ViewService,
+    mapper: T_Mapper,
+):
+    views_db = await view_srv.list_views(user)
+
+    return [mapper.map_view_soft(view_db) for view_db in views_db]

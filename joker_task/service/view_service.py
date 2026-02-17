@@ -1,8 +1,9 @@
 from datetime import datetime
 from http import HTTPStatus
-from typing import Annotated
+from typing import Annotated, Sequence
 
 from fastapi import Depends, HTTPException
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,6 +20,9 @@ class ViewService(ViewServiceInterface):
         self.session = session
 
     async def create_view(self, user: User, view: ViewSchema) -> View:
+        logger.debug(
+            f'Creating view for user {user.email} with name {view.name}'
+        )
         await self._find_conflicting(user, view.name)
         view_db = View(
             user_email=user.email,
@@ -35,6 +39,17 @@ class ViewService(ViewServiceInterface):
             self.session.add(filter_db)
 
         return view_db
+
+    async def list_views(self, user: User) -> Sequence[View]:
+        logger.debug(f'Listing views for user {user.email}')
+
+        result = await self.session.scalars(
+            select(View)
+            .where(View.user_email == user.email)
+            .order_by(View.id_view)
+        )
+
+        return result.all()
 
     @staticmethod
     def _make_filter_db(view_db: View, filter_schema: FilterSchema) -> Filter:

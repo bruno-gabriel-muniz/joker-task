@@ -11,6 +11,7 @@ from joker_task.schemas import (
     UserPublic,
     ViewPublic,
     ViewSchema,
+    ViewSoft,
     WorkbenchPublic,
 )
 
@@ -102,6 +103,10 @@ class ViewServiceInterface(ABC):
     async def create_view(self, user: User, view_schema: ViewSchema) -> View:
         pass  # pragma: no cover
 
+    @abstractmethod
+    async def list_views(self, user: User) -> Sequence[View]:
+        pass  # pragma: no cover
+
 
 class MapperInterface(ABC):
     @staticmethod
@@ -132,4 +137,9 @@ class MapperInterface(ABC):
     @staticmethod
     @abstractmethod
     def map_view_public(view_db: View) -> ViewPublic:
+        pass  # pragma: no cover
+
+    @staticmethod
+    @abstractmethod
+    def map_view_soft(view_db: View) -> ViewSoft:
         pass  # pragma: no cover

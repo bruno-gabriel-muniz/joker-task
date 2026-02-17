@@ -224,7 +224,7 @@ class Filter:
         JSON, nullable=True
     )
     repetition: Mapped[str | None] = mapped_column(String, nullable=True)
-    state: Mapped[Sequence[str | None]] = mapped_column(JSON, nullable=True)
+    state: Mapped[Sequence[str] | None] = mapped_column(JSON, nullable=True)
     priority: Mapped[tuple[int | None, int | None]] = mapped_column(
         JSON, nullable=True
     )

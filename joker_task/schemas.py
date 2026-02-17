@@ -150,5 +150,13 @@ class ViewPublic(ViewSchema):
     updated_at: datetime
 
 
+class ViewSoft(BaseModel):
+    name: str
+    id_view: int
+    user_email: EmailStr
+    created_at: datetime
+    updated_at: datetime
+
+
 class ResponseTasks(BaseModel):
     responses: list[TaskPublic]

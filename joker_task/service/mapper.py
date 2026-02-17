@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Sequence
 
 from loguru import logger
 
@@ -10,6 +11,7 @@ from joker_task.schemas import (
     TaskPublic,
     UserPublic,
     ViewPublic,
+    ViewSoft,
     WorkbenchPublic,
 )
 
@@ -96,6 +98,17 @@ class Mapper(MapperInterface):
         )
 
     @staticmethod
+    def map_view_soft(view_db: View) -> ViewSoft:
+        logger.debug(f'mapping view {view_db.id_view} to ViewSoft')
+        return ViewSoft(
+            name=view_db.name,
+            id_view=view_db.id_view,
+            user_email=view_db.user_email,
+            created_at=view_db.created_at,
+            updated_at=view_db.updated_at,
+        )
+
+    @staticmethod
     def _map_filter_schema(filter_db: Filter) -> FilterSchema:
         return FilterSchema(
             offset=filter_db.offset,
@@ -112,7 +125,7 @@ class Mapper(MapperInterface):
 
     @staticmethod
     def _deserialize_reminder(
-        reminder: tuple[str | None, str | None] | list[str | None] | None,
+        reminder: tuple[str | None, str | None] | Sequence[str | None] | None,
     ) -> tuple[datetime | None, datetime | None] | None:
         if reminder is None:
             return None

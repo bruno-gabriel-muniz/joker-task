@@ -121,3 +121,27 @@ def test_post_view_with_conflicting_name(
     data = rsp.json()
 
     assert data['detail'] == 'View with this name already exists'
+
+
+def test_get_views(client: TestClient, users: list[dict], views: list[dict]):
+    rsp = client.get(
+        '/views/',
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = rsp.json()
+    views_alice = [
+        view for view in views if view['user_email'] == users[0]['email']
+    ]
+
+    assert len(data) == len(views_alice)
+    assert data[0]['id_view'] == views_alice[0]['id_view']
+    assert data[1]['id_view'] == views_alice[1]['id_view']
+
+    assert data[0]['name'] == views_alice[0]['name']
+    assert data[1]['name'] == views_alice[1]['name']
+
+    assert data[0]['user_email'] == views_alice[0]['user_email']
+    assert data[1]['user_email'] == views_alice[1]['user_email']
