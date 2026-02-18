@@ -107,6 +107,10 @@ class ViewServiceInterface(ABC):
     async def list_views(self, user: User) -> Sequence[View]:
         pass  # pragma: no cover
 
+    @abstractmethod
+    async def get_view_by_id(self, user: User, id: int) -> View:
+        pass  # pragma: no cover
+
 
 class MapperInterface(ABC):
     @staticmethod

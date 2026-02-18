@@ -40,3 +40,15 @@ async def list_views(
     views_db = await view_srv.list_views(user)
 
     return [mapper.map_view_soft(view_db) for view_db in views_db]
+
+
+@views_router.get('/{id}', response_model=ViewPublic)
+async def get_view(
+    id: int,
+    user: T_User,
+    view_srv: T_ViewService,
+    mapper: T_Mapper,
+):
+    view_db = await view_srv.get_view_by_id(user, id)
+
+    return mapper.map_view_public(view_db)

@@ -6,6 +6,7 @@ from fastapi import Depends, HTTPException
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from joker_task.db.database import get_session
 from joker_task.db.models import Filter, User, View
@@ -51,6 +52,20 @@ class ViewService(ViewServiceInterface):
 
         return result.all()
 
+    async def get_view_by_id(self, user: User, id: int) -> View:
+        logger.debug(f'Getting view {id} for user {user.email}')
+
+        view_db = await self.session.scalar(
+            select(View)
+            .where(View.id_view == id, View.user_email == user.email)
+            .options(selectinload(View.filters))
+        )
+
+        if not view_db:
+            raise HTTPException(HTTPStatus.NOT_FOUND, 'view not found')
+
+        return view_db
+
     @staticmethod
     def _make_filter_db(view_db: View, filter_schema: FilterSchema) -> Filter:
         return Filter(
@@ -91,5 +106,5 @@ class ViewService(ViewServiceInterface):
         if have_conflict is not None:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
-                detail='View with this name already exists',
+                detail='view with this name already exists',
             )

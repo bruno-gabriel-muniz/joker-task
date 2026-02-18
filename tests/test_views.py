@@ -120,7 +120,7 @@ def test_post_view_with_conflicting_name(
 
     data = rsp.json()
 
-    assert data['detail'] == 'View with this name already exists'
+    assert data['detail'] == 'view with this name already exists'
 
 
 def test_get_views(client: TestClient, users: list[dict], views: list[dict]):
@@ -145,3 +145,52 @@ def test_get_views(client: TestClient, users: list[dict], views: list[dict]):
 
     assert data[0]['user_email'] == views_alice[0]['user_email']
     assert data[1]['user_email'] == views_alice[1]['user_email']
+
+
+def test_get_view_by_id(
+    client: TestClient, users: list[dict], views: list[dict]
+):
+    view = views[0]
+
+    rsp = client.get(
+        f'/views/{view["id_view"]}',
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = rsp.json()
+
+    assert data['id_view'] == view['id_view']
+    assert data['user_email'] == view['user_email']
+    assert data['name'] == view['name']
+
+
+def test_get_view_by_id_not_found(client: TestClient, users: list[dict]):
+    rsp = client.get(
+        '/views/999',
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NOT_FOUND
+
+    data = rsp.json()
+
+    assert data['detail'] == 'view not found'
+
+
+def test_get_view_by_id_other_user(
+    client: TestClient, users: list[dict], views: list[dict]
+):
+    view = views[0]
+
+    rsp = client.get(
+        f'/views/{view["id_view"]}',
+        headers={'Authorization': f'Bearer {users[1]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NOT_FOUND
+
+    data = rsp.json()
+
+    assert data['detail'] == 'view not found'
