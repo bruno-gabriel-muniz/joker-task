@@ -82,7 +82,7 @@ async def test_post_view_with_full_filter(
     assert filter_db.priority == [10, 20]
 
 
-def test_post_view_with_filter_empty(client: TestClient, users: list[dict]):
+def test_post_view_without_filter(client: TestClient, users: list[dict]):
     rsp = client.post(
         '/views/',
         json={
@@ -102,6 +102,26 @@ def test_post_view_with_filter_empty(client: TestClient, users: list[dict]):
     assert len(data['filters']) == 1
 
     assert data['filters'][0]['title'] == 'None'
+
+
+def test_post_view_with_filter_empty(client: TestClient, users: list[dict]):
+    rsp = client.post(
+        '/views/',
+        json={
+            'name': 'Minha View Vazia',
+            'filters': [{}],
+        },
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.CREATED
+
+    data = rsp.json()
+
+    assert data['id_view'] == 1
+    assert data['user_email'] == users[0]['email']
+    assert data['name'] == 'Minha View Vazia'
+    assert len(data['filters']) == 1
 
 
 def test_post_view_with_conflicting_name(
@@ -194,3 +214,37 @@ def test_get_view_by_id_other_user(
     data = rsp.json()
 
     assert data['detail'] == 'view not found'
+
+
+def test_get_view_tasks(
+    client: TestClient,
+    users: list[dict],
+    views: list[dict],
+    filters: list[dict],
+    tasks: list[dict],
+):
+    view = views[0]
+
+    rsp = client.get(
+        f'/views/{view["id_view"]}/tasks',
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = rsp.json()['result']
+
+    qnt_t_filter_1 = 2
+    qnt_t_filter_2 = 1
+
+    assert isinstance(data, dict)
+    assert len(data) == len(filters)
+    assert len(data['1']) == qnt_t_filter_1
+    assert data['1'][0]['id_task'] == 1
+    assert data['1'][0]['title'] == 'test'
+    assert data['1'][1]['id_task'] == tasks[1]['id_task']
+    assert data['1'][1]['title'] == 'a other test'
+
+    assert len(data['2']) == qnt_t_filter_2
+    assert data['2'][0]['id_task'] == tasks[2]['id_task']
+    assert data['2'][0]['title'] == 'title'

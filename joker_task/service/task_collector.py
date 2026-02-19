@@ -41,7 +41,9 @@ class TaskCollector(TaskCollectorInterface):
 
         logger.debug('searching tasks')
         result: list[Task] = list(
-            (await self.session.scalars(filter_sql)).all()
+            (
+                await self.session.scalars(filter_sql.order_by(Task.id_task))
+            ).all()
         )
 
         return result

@@ -9,16 +9,28 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from joker_task.db.database import get_session
-from joker_task.db.models import Filter, User, View
-from joker_task.interfaces.interfaces import ViewServiceInterface
+from joker_task.db.models import Filter, Task, User, View
+from joker_task.interfaces.interfaces import (
+    MapperInterface,
+    TaskCollectorInterface,
+    ViewServiceInterface,
+)
 from joker_task.schemas import FilterSchema, ViewSchema
+from joker_task.service.mapper import Mapper
+from joker_task.service.task_collector import TaskCollector
 
 T_Session = Annotated[AsyncSession, Depends(get_session)]
+T_CollectorTask = Annotated[TaskCollectorInterface, Depends(TaskCollector)]
+T_Mapper = Annotated[MapperInterface, Depends(Mapper)]
 
 
 class ViewService(ViewServiceInterface):
-    def __init__(self, session: T_Session):
+    def __init__(
+        self, session: T_Session, collector: T_CollectorTask, mapper: T_Mapper
+    ):
         self.session = session
+        self.collector = collector
+        self.mapper = mapper
 
     async def create_view(self, user: User, view: ViewSchema) -> View:
         logger.debug(
@@ -52,12 +64,12 @@ class ViewService(ViewServiceInterface):
 
         return result.all()
 
-    async def get_view_by_id(self, user: User, id: int) -> View:
-        logger.debug(f'Getting view {id} for user {user.email}')
+    async def get_view_by_id(self, user: User, id_view: int) -> View:
+        logger.debug(f'Getting view {id_view} for user {user.email}')
 
         view_db = await self.session.scalar(
             select(View)
-            .where(View.id_view == id, View.user_email == user.email)
+            .where(View.id_view == id_view, View.user_email == user.email)
             .options(selectinload(View.filters))
         )
 
@@ -66,11 +78,31 @@ class ViewService(ViewServiceInterface):
 
         return view_db
 
+    async def apply_view(
+        self,
+        user: User,
+        id_view: int,
+    ) -> dict[int, list[Task]]:
+        logger.debug(f'Applying view {id_view} for user {user.email}')
+
+        view = await self.get_view_by_id(user, id_view)
+
+        result: dict[int, list[Task]] = {}
+
+        for filter in view.filters:
+            result[
+                filter.id_filter
+            ] = await self.collector.collect_task_by_filter(
+                user, self.mapper.map_filter_schema(filter)
+            )
+
+        return result
+
     @staticmethod
     def _make_filter_db(view_db: View, filter_schema: FilterSchema) -> Filter:
         return Filter(
-            view=view_db,
             id_view=view_db.id_view,
+            view=view_db,
             title=filter_schema.title,
             description=filter_schema.description,
             done=filter_schema.done,

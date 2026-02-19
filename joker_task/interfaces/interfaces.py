@@ -3,13 +3,14 @@ from typing import Any, Sequence
 
 from sqlalchemy import Select
 
-from joker_task.db.models import Tag, Task, User, View, Workbench
+from joker_task.db.models import Filter, Tag, Task, User, View, Workbench
 from joker_task.schemas import (
     FilterSchema,
     TagPublic,
     TaskPublic,
     UserPublic,
     ViewPublic,
+    ViewResult,
     ViewSchema,
     ViewSoft,
     WorkbenchPublic,
@@ -108,7 +109,13 @@ class ViewServiceInterface(ABC):
         pass  # pragma: no cover
 
     @abstractmethod
-    async def get_view_by_id(self, user: User, id: int) -> View:
+    async def get_view_by_id(self, user: User, id_view: int) -> View:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    async def apply_view(
+        self, user: User, id_view: int
+    ) -> dict[int, list[Task]]:
         pass  # pragma: no cover
 
 
@@ -146,4 +153,14 @@ class MapperInterface(ABC):
     @staticmethod
     @abstractmethod
     def map_view_soft(view_db: View) -> ViewSoft:
+        pass  # pragma: no cover
+
+    @staticmethod
+    @abstractmethod
+    def map_view_result(result: dict[int, list[Task]]) -> ViewResult:
+        pass  # pragma: no cover
+
+    @staticmethod
+    @abstractmethod
+    def map_filter_schema(filter_db: Filter) -> FilterSchema:
         pass  # pragma: no cover

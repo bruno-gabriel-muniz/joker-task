@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from joker_task.app import app
 from joker_task.db.database import get_session
 from joker_task.db.models import (
+    Filter,
     Tag,
     Task,
     User,
@@ -205,6 +206,28 @@ async def views(session: AsyncSession, users) -> list[dict[str, Any]]:
     session.add(view1_obj)
     session.add(view2_obj)
     session.add(view3_obj)
+    await session.commit()
+
+    return out
+
+
+@pytest_asyncio.fixture
+async def filters(session: AsyncSession, users, views) -> list[dict[str, Any]]:
+    views_in_db = (
+        await session.scalars(select(View).order_by(View.id_view))
+    ).all()
+
+    filter1 = {'title': '%test%', 'id_view': 1}
+
+    filter2 = {'title': 'title', 'id_view': 1}
+
+    out = [filter1, filter2]
+
+    filter_obj1 = Filter(title='%test%', id_view=1, view=views_in_db[0])
+    filter_obj2 = Filter(title='title', id_view=1, view=views_in_db[0])
+
+    session.add(filter_obj1)
+    session.add(filter_obj2)
     await session.commit()
 
     return out

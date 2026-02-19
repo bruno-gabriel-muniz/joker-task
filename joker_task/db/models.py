@@ -216,17 +216,29 @@ class Filter:
     id_filter: Mapped[int] = mapped_column(
         Integer, primary_key=True, init=False, autoincrement=True
     )
-    title: Mapped[str | None] = mapped_column(String, nullable=True)
-    description: Mapped[str | None] = mapped_column(String, nullable=True)
-    done: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
-    tags: Mapped[Sequence[str]] = mapped_column(JSON, nullable=True)
-    reminder: Mapped[Sequence[str | None] | None] = mapped_column(
-        JSON, nullable=True
+    title: Mapped[str | None] = mapped_column(
+        String, nullable=True, default=None
     )
-    repetition: Mapped[str | None] = mapped_column(String, nullable=True)
-    state: Mapped[Sequence[str] | None] = mapped_column(JSON, nullable=True)
+    description: Mapped[str | None] = mapped_column(
+        String, nullable=True, default=None
+    )
+    done: Mapped[bool | None] = mapped_column(
+        Boolean, nullable=True, default=None
+    )
+    tags: Mapped[Sequence[str] | None] = mapped_column(
+        JSON, nullable=True, default=None
+    )
+    reminder: Mapped[Sequence[str | None] | None] = mapped_column(
+        JSON, nullable=True, default=None
+    )
+    repetition: Mapped[str | None] = mapped_column(
+        String, nullable=True, default=None
+    )
+    state: Mapped[Sequence[str] | None] = mapped_column(
+        JSON, nullable=True, default=None
+    )
     priority: Mapped[tuple[int | None, int | None]] = mapped_column(
-        JSON, nullable=True
+        JSON, nullable=True, default=None
     )
 
     offset: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

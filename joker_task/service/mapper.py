@@ -11,6 +11,7 @@ from joker_task.schemas import (
     TaskPublic,
     UserPublic,
     ViewPublic,
+    ViewResult,
     ViewSoft,
     WorkbenchPublic,
 )
@@ -88,7 +89,7 @@ class Mapper(MapperInterface):
         return ViewPublic(
             name=view_db.name,
             filters=[
-                Mapper._map_filter_schema(filter_db)
+                Mapper.map_filter_schema(filter_db)
                 for filter_db in view_db.filters
             ],
             id_view=view_db.id_view,
@@ -109,7 +110,16 @@ class Mapper(MapperInterface):
         )
 
     @staticmethod
-    def _map_filter_schema(filter_db: Filter) -> FilterSchema:
+    def map_view_result(result: dict[int, list[Task]]) -> ViewResult:
+        result_mapped = {
+            id: [Mapper.map_task_public(task) for task in tasks]
+            for id, tasks in result.items()
+        }
+
+        return ViewResult(result=result_mapped)
+
+    @staticmethod
+    def map_filter_schema(filter_db: Filter) -> FilterSchema:
         return FilterSchema(
             offset=filter_db.offset,
             limit=filter_db.limit,

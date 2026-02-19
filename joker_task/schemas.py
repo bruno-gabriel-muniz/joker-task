@@ -158,5 +158,9 @@ class ViewSoft(BaseModel):
     updated_at: datetime
 
 
+class ViewResult(BaseModel):
+    result: dict[int, list[TaskPublic]]
+
+
 class ResponseTasks(BaseModel):
     responses: list[TaskPublic]
