@@ -138,9 +138,15 @@ class FilterSchema(FilterPage):
     )
 
 
+class FilterPublic(FilterSchema):
+    id_filter: int
+    created_at: datetime
+    updated_at: datetime
+
+
 class ViewSchema(BaseModel):
     name: str
-    filters: list[FilterSchema] = Field(default_factory=list)
+    filters: list[FilterPublic | FilterSchema] = Field(default_factory=list)
 
 
 class ViewPublic(ViewSchema):
@@ -160,6 +166,10 @@ class ViewSoft(BaseModel):
 
 class ViewResult(BaseModel):
     result: dict[int, list[TaskPublic]]
+
+
+class ViewUpdate(BaseModel):
+    name: str
 
 
 class ResponseTasks(BaseModel):

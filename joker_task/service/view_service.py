@@ -15,7 +15,7 @@ from joker_task.interfaces.interfaces import (
     TaskCollectorInterface,
     ViewServiceInterface,
 )
-from joker_task.schemas import FilterSchema, ViewSchema
+from joker_task.schemas import FilterSchema, ViewSchema, ViewUpdate
 from joker_task.service.mapper import Mapper
 from joker_task.service.task_collector import TaskCollector
 
@@ -93,10 +93,108 @@ class ViewService(ViewServiceInterface):
             result[
                 filter.id_filter
             ] = await self.collector.collect_task_by_filter(
-                user, self.mapper.map_filter_schema(filter)
+                user, self.mapper.map_filter_public(filter)
             )
 
         return result
+
+    async def update_view(
+        self, user: User, id_view: int, view: ViewUpdate
+    ) -> View:
+        logger.debug(f'Updating view {id_view} for user {user.email}')
+
+        view_db = await self.get_view_by_id(user, id_view)
+
+        if not view.name:  # empty name is not allowed
+            raise HTTPException(
+                status_code=HTTPStatus.BAD_REQUEST,
+                detail='name cannot be empty',
+            )
+        elif view_db.name != view.name:
+            await self._find_conflicting(user, view.name)
+
+        view_db.name = view.name
+        self.session.add(view_db)
+
+        return view_db
+
+    async def create_view_filter(
+        self, user: User, id_view: int, filter_schema: FilterSchema
+    ) -> Filter:
+        logger.debug(
+            f'Creating filter for view {id_view} for user {user.email}'
+        )
+
+        view_db = await self.get_view_by_id(user, id_view)
+
+        filter_db = self._make_filter_db(view_db, filter_schema)
+        self.session.add(filter_db)
+
+        return filter_db
+
+    async def update_view_filter(
+        self,
+        user: User,
+        id_view: int,
+        id_filter: int,
+        filter_schema: FilterSchema,
+    ) -> Filter:
+        logger.debug(
+            f'Updating filter {id_filter} '
+            + f'for view {id_view} for user {user.email}'
+        )
+
+        view_db = await self.get_view_by_id(user, id_view)
+
+        filter_db = next(
+            (
+                filter
+                for filter in view_db.filters
+                if filter.id_filter == id_filter
+            ),
+            None,
+        )
+
+        if not filter_db:
+            raise HTTPException(HTTPStatus.NOT_FOUND, 'filter not found')
+
+        filter_db.title = filter_schema.title
+        filter_db.description = filter_schema.description
+        filter_db.done = filter_schema.done
+        filter_db.tags = filter_schema.tags or None
+        filter_db.reminder = self._serialize_reminder(filter_schema.reminder)
+        filter_db.repetition = filter_schema.repetition
+        filter_db.state = filter_schema.state or []
+        filter_db.priority = filter_schema.priority or (None, None)
+        filter_db.limit = filter_schema.limit
+        filter_db.offset = filter_schema.offset
+        self.session.add(filter_db)
+
+        return filter_db
+
+    async def delete_view_filter(
+        self, user: User, id_view: int, id_filter: int
+    ) -> None:
+        logger.debug(
+            f'Deleting filter {id_filter} '
+            + f'for view {id_view} for user {user.email}'
+        )
+
+        view_db = await self.get_view_by_id(user, id_view)
+
+        filter_db = next(
+            (
+                filter
+                for filter in view_db.filters
+                if filter.id_filter == id_filter
+            ),
+            None,
+        )
+
+        if not filter_db:
+            raise HTTPException(HTTPStatus.NOT_FOUND, 'filter not found')
+
+        await self.session.delete(filter_db)
 
     @staticmethod
     def _make_filter_db(view_db: View, filter_schema: FilterSchema) -> Filter:

@@ -5,6 +5,7 @@ from sqlalchemy import Select
 
 from joker_task.db.models import Filter, Tag, Task, User, View, Workbench
 from joker_task.schemas import (
+    FilterPublic,
     FilterSchema,
     TagPublic,
     TaskPublic,
@@ -13,6 +14,7 @@ from joker_task.schemas import (
     ViewResult,
     ViewSchema,
     ViewSoft,
+    ViewUpdate,
     WorkbenchPublic,
 )
 
@@ -118,6 +120,34 @@ class ViewServiceInterface(ABC):
     ) -> dict[int, list[Task]]:
         pass  # pragma: no cover
 
+    @abstractmethod
+    async def update_view(
+        self, user: User, id_view: int, view: ViewUpdate
+    ) -> View:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    async def create_view_filter(
+        self, user: User, id_view: int, filter_schema: FilterSchema
+    ) -> Filter:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    async def update_view_filter(
+        self,
+        user: User,
+        id_view: int,
+        id_filter: int,
+        filter_schema: FilterSchema,
+    ) -> Filter:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    async def delete_view_filter(
+        self, user: User, id_view: int, id_filter: int
+    ) -> None:
+        pass  # pragma: no cover
+
 
 class MapperInterface(ABC):
     @staticmethod
@@ -162,5 +192,5 @@ class MapperInterface(ABC):
 
     @staticmethod
     @abstractmethod
-    def map_filter_schema(filter_db: Filter) -> FilterSchema:
+    def map_filter_public(filter_db: Filter) -> FilterPublic:
         pass  # pragma: no cover

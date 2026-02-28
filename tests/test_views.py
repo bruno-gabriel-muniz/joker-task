@@ -248,3 +248,294 @@ def test_get_view_tasks(
     assert len(data['2']) == qnt_t_filter_2
     assert data['2'][0]['id_task'] == tasks[2]['id_task']
     assert data['2'][0]['title'] == 'title'
+
+
+@pytest.mark.asyncio
+async def test_update_view(
+    client: TestClient,
+    session: AsyncSession,
+    users: list[dict],
+    views: list[dict],
+):
+    view = views[0]
+
+    rsp = client.put(
+        f'/views/{view["id_view"]}',
+        json={
+            'name': 'Minha View Atualizada',
+        },
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = rsp.json()
+
+    assert data['id_view'] == view['id_view']
+    assert data['user_email'] == view['user_email']
+    assert data['name'] == 'Minha View Atualizada'
+
+    view_db = await session.scalar(
+        select(View).where(View.id_view == view['id_view']),
+    )
+
+    assert view_db is not None
+    assert view_db.name == 'Minha View Atualizada'
+
+
+def test_update_view_not_found(client: TestClient, users: list[dict]):
+    rsp = client.put(
+        '/views/999',
+        json={
+            'name': 'Minha View Atualizada',
+        },
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NOT_FOUND
+
+    data = rsp.json()
+
+    assert data['detail'] == 'view not found'
+
+
+def test_update_view_other_user(
+    client: TestClient, users: list[dict], views: list[dict]
+):
+    view = views[0]
+
+    rsp = client.put(
+        f'/views/{view["id_view"]}',
+        json={
+            'name': 'Minha View Atualizada',
+        },
+        headers={'Authorization': f'Bearer {users[1]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NOT_FOUND
+
+    data = rsp.json()
+
+    assert data['detail'] == 'view not found'
+
+
+def test_update_view_with_conflicting_name(
+    client: TestClient, users: list[dict], views: list[dict]
+):
+    view = views[0]
+    other_view = views[1]
+
+    rsp = client.put(
+        f'/views/{view["id_view"]}',
+        json={
+            'name': other_view['name'],
+        },
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.CONFLICT
+
+    data = rsp.json()
+
+    assert data['detail'] == 'view with this name already exists'
+
+
+def test_update_view_with_invalid_name(
+    client: TestClient, users: list[dict], views: list[dict]
+):
+    view = views[0]
+
+    rsp = client.put(
+        f'/views/{view["id_view"]}',
+        json={
+            'name': '',
+        },
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.BAD_REQUEST
+
+    assert rsp.json()['detail'] == 'name cannot be empty'
+
+
+@pytest.mark.asyncio
+async def test_create_view_filter(
+    client: TestClient,
+    session: AsyncSession,
+    users: list[dict],
+    views: list[dict],
+    filters: list[dict],
+):
+    view = views[0]
+
+    rsp = client.post(
+        f'/views/{view["id_view"]}/filters',
+        json={
+            'title': 'Test%',
+            'description': '%test%',
+            'done': True,
+            'tags': ['tag3'],
+            'reminder': None,
+            'repetition': None,
+            'state': ['TODO'],
+            'priority': [5, 15],
+        },
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.CREATED
+
+    data = rsp.json()
+    id_filter_spec = 3
+
+    assert data['id_filter'] == id_filter_spec
+    assert data['title'] == 'Test%'
+    assert data['description'] == '%test%'
+    assert data['done'] is True
+    assert data['tags'] == ['tag3']
+    assert data['reminder'] is None
+    assert data['repetition'] is None
+    assert data['state'] == ['TODO']
+    assert data['priority'] == [5, 15]
+
+    view_db = await session.scalar(
+        select(View)
+        .where(View.id_view == view['id_view'])
+        .options(selectinload(View.filters)),
+    )
+
+    assert view_db is not None
+    assert len(view_db.filters) == len(filters) + 1
+    assert view_db.filters[-1].id_filter == id_filter_spec
+    assert view_db.filters[-1].title == 'Test%'
+
+
+@pytest.mark.asyncio
+async def test_update_view_filter(
+    client: TestClient,
+    session: AsyncSession,
+    users: list[dict],
+    views: list[dict],
+    filters: list[dict],
+):
+    view = views[0]
+    filter = filters[0]
+
+    rsp = client.patch(
+        f'/views/{view["id_view"]}/filters/{filter["id_filter"]}',
+        json={
+            'title': 'Updated Title',
+            'description': 'Updated Description',
+            'done': False,
+            'tags': ['tag4'],
+            'reminder': None,
+            'repetition': None,
+            'state': ['IN_PROGRESS'],
+            'priority': [1, 10],
+        },
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = rsp.json()
+
+    assert data['id_filter'] == filter['id_filter']
+    assert data['title'] == 'Updated Title'
+    assert data['description'] == 'Updated Description'
+    assert data['done'] is False
+    assert data['tags'] == ['tag4']
+    assert data['reminder'] is None
+    assert data['repetition'] is None
+    assert data['state'] == ['IN_PROGRESS']
+    assert data['priority'] == [1, 10]
+
+    view_db = await session.scalar(
+        select(View)
+        .where(View.id_view == view['id_view'])
+        .options(selectinload(View.filters)),
+    )
+
+    assert view_db is not None
+    assert len(view_db.filters) == len(filters)
+    assert view_db.filters[0].id_filter == filter['id_filter']
+    assert view_db.filters[0].title == 'Updated Title'
+    assert view_db.filters[0].description == 'Updated Description'
+    assert view_db.filters[0].done is False
+    assert view_db.filters[0].tags == ['tag4']
+    assert view_db.filters[0].reminder is None
+    assert view_db.filters[0].repetition is None
+    assert view_db.filters[0].state == ['IN_PROGRESS']
+    assert view_db.filters[0].priority == [1, 10]
+
+
+def test_update_view_filter_not_found(
+    client: TestClient, users: list[dict], views: list[dict]
+):
+    view = views[0]
+
+    rsp = client.patch(
+        f'/views/{view["id_view"]}/filters/999',
+        json={
+            'title': 'Updated Title',
+            'description': 'Updated Description',
+            'done': False,
+            'tags': ['tag4'],
+            'reminder': None,
+            'repetition': None,
+            'state': ['IN_PROGRESS'],
+            'priority': [1, 10],
+        },
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NOT_FOUND
+
+    data = rsp.json()
+
+    assert data['detail'] == 'filter not found'
+
+
+@pytest.mark.asyncio
+async def test_delete_view_filter(
+    client: TestClient,
+    session: AsyncSession,
+    users: list[dict],
+    views: list[dict],
+    filters: list[dict],
+):
+    view = views[0]
+    filter = filters[0]
+
+    rsp = client.delete(
+        f'/views/{view["id_view"]}/filters/{filter["id_filter"]}',
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NO_CONTENT
+
+    view_db = await session.scalar(
+        select(View)
+        .where(View.id_view == view['id_view'])
+        .options(selectinload(View.filters)),
+    )
+
+    assert view_db is not None
+    assert len(view_db.filters) == len(filters) - 1
+
+
+def test_delete_view_filter_not_found(
+    client: TestClient, users: list[dict], views: list[dict]
+):
+    view = views[0]
+
+    rsp = client.delete(
+        f'/views/{view["id_view"]}/filters/999',
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NOT_FOUND
+
+    data = rsp.json()
+
+    assert data['detail'] == 'filter not found'

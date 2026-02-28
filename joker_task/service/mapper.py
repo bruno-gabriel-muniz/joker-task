@@ -6,7 +6,7 @@ from loguru import logger
 from joker_task.db.models import Filter, Tag, Task, User, View, Workbench
 from joker_task.interfaces.interfaces import MapperInterface
 from joker_task.schemas import (
-    FilterSchema,
+    FilterPublic,
     TagPublic,
     TaskPublic,
     UserPublic,
@@ -89,7 +89,7 @@ class Mapper(MapperInterface):
         return ViewPublic(
             name=view_db.name,
             filters=[
-                Mapper.map_filter_schema(filter_db)
+                Mapper.map_filter_public(filter_db)
                 for filter_db in view_db.filters
             ],
             id_view=view_db.id_view,
@@ -119,8 +119,11 @@ class Mapper(MapperInterface):
         return ViewResult(result=result_mapped)
 
     @staticmethod
-    def map_filter_schema(filter_db: Filter) -> FilterSchema:
-        return FilterSchema(
+    def map_filter_public(filter_db: Filter) -> FilterPublic:
+        return FilterPublic(
+            id_filter=filter_db.id_filter,
+            created_at=filter_db.created_at,
+            updated_at=filter_db.updated_at,
             offset=filter_db.offset,
             limit=filter_db.limit,
             title=filter_db.title,

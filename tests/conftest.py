@@ -217,9 +217,9 @@ async def filters(session: AsyncSession, users, views) -> list[dict[str, Any]]:
         await session.scalars(select(View).order_by(View.id_view))
     ).all()
 
-    filter1 = {'title': '%test%', 'id_view': 1}
+    filter1 = {'title': '%test%', 'id_filter': 1, 'id_view': 1}
 
-    filter2 = {'title': 'title', 'id_view': 1}
+    filter2 = {'title': 'title', 'id_filter': 2, 'id_view': 1}
 
     out = [filter1, filter2]
 

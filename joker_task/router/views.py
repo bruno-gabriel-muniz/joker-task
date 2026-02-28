@@ -2,7 +2,15 @@ from http import HTTPStatus
 
 from fastapi import APIRouter
 
-from joker_task.schemas import ViewPublic, ViewResult, ViewSchema, ViewSoft
+from joker_task.schemas import (
+    FilterPublic,
+    FilterSchema,
+    ViewPublic,
+    ViewResult,
+    ViewSchema,
+    ViewSoft,
+    ViewUpdate,
+)
 from joker_task.service.dependencies import (
     T_Mapper,
     T_Session,
@@ -61,3 +69,82 @@ async def apply_view(
     view_result = await view_srv.apply_view(user, id_view)
 
     return mapper.map_view_result(view_result)
+
+
+@views_router.put(
+    '/{id_view}', status_code=HTTPStatus.OK, response_model=ViewSoft
+)
+async def update_view(  # noqa: PLR0913, PLR0917
+    id_view: int,
+    view: ViewUpdate,
+    user: T_User,
+    session: T_Session,
+    view_srv: T_ViewService,
+    mapper: T_Mapper,
+):
+    updated_view_db = await view_srv.update_view(user, id_view, view)
+
+    await session.commit()
+    await session.refresh(updated_view_db)
+
+    return mapper.map_view_soft(updated_view_db)
+
+
+@views_router.post(
+    '/{id_view}/filters',
+    status_code=HTTPStatus.CREATED,
+    response_model=FilterPublic,
+)
+async def post_view_filter(  # noqa: PLR0913, PLR0917
+    id_view: int,
+    filter_schema: FilterSchema,
+    user: T_User,
+    session: T_Session,
+    view_srv: T_ViewService,
+    mapper: T_Mapper,
+):
+    filter_db = await view_srv.create_view_filter(user, id_view, filter_schema)
+
+    await session.commit()
+    await session.refresh(filter_db)
+
+    return mapper.map_filter_public(filter_db)
+
+
+@views_router.patch(
+    '/{id_view}/filters/{id_filter}',
+    status_code=HTTPStatus.OK,
+    response_model=FilterPublic,
+)
+async def update_view_filter(  # noqa: PLR0913, PLR0917
+    id_view: int,
+    id_filter: int,
+    filter_schema: FilterSchema,
+    user: T_User,
+    session: T_Session,
+    view_srv: T_ViewService,
+    mapper: T_Mapper,
+):
+    filter_db = await view_srv.update_view_filter(
+        user, id_view, id_filter, filter_schema
+    )
+
+    await session.commit()
+    await session.refresh(filter_db)
+
+    return mapper.map_filter_public(filter_db)
+
+
+@views_router.delete(
+    '/{id_view}/filters/{id_filter}', status_code=HTTPStatus.NO_CONTENT
+)
+async def delete_view_filter(
+    id_view: int,
+    id_filter: int,
+    user: T_User,
+    session: T_Session,
+    view_srv: T_ViewService,
+):
+    await view_srv.delete_view_filter(user, id_view, id_filter)
+
+    await session.commit()
