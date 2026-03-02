@@ -50,12 +50,12 @@ concurrency = ["thread", "greenlet"]
 
 [tool.taskipy.tasks]
 lint = 'ruff check'
-pre_format = 'ruff check --fix'
 format = 'ruff format'
+post_format = 'ruff check --fix'
 run = 'fastapi dev joker_task/app.py'
-pre_test = 'task lint'
-test = 'pytest -s -x --cov=joker_task -vv'
-post_test = 'coverage html'
+pre_testf = 'task format'
+testf = 'pytest -s -x --cov=joker_task -vv'
+post_testf = 'coverage html'
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

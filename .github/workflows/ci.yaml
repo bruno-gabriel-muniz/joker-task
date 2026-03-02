@@ -30,6 +30,9 @@ jobs:
       - name: Instalar dependências
         run: poetry install
 
+      - name: Verificar formatação
+        run: poetry run task lint
+
       - name: Executar testes
         run: poetry run pytest --cov --cov-branch --cov-report=xml
 
