@@ -25,10 +25,10 @@ O domínio do sistema é organizado em três conceitos centrais, além dos usuá
   - trackers
   - ou tarefas simples, sem estrutura adicional
 
-- **Workbenches** *(planejado)*  
+- **Workbenches**  
   Zonas de trabalho que facilitam a visualização recorrente de determinado conjunto de tarefas.
 
-- **Views** *(planejado)*  
+- **Views**  
   Filtros reutilizáveis que coletam tarefas com base em critérios específicos.
 
 > A ideia é que qualquer técnica de organização surja da **combinação desses elementos**, e não de tipos rígidos de tarefas.
@@ -42,6 +42,8 @@ Atualmente, o projeto conta com:
 - autenticação e autorização
 - CRUD de tarefas e tags por usuário
 - filtragem dinâmica de tarefas
+- views reutilizáveis
+- associação de tarefas via workbenches
 - arquitetura modular com separação clara de responsabilidades
 - testes automatizados com cobertura
 
@@ -89,13 +91,12 @@ poetry run task run
 
 #### Como rodar os testes?
 ```
-poetry run task test
+poetry run task testf
 ```
 
 #### Como usar os linters?
 
 ```
-poetry run task lint
 poetry run task format
 ```
 
@@ -116,11 +117,13 @@ poetry run task format
 │ │ ├── auth.py
 │ │ ├── tasks.py
 │ │ ├── tags.py
+│ │ ├── views.py
 │ │ └── workbenches.py
 │ ├── service
 │ │ ├── security.py
 │ │ ├── task_collector.py
 │ │ ├── tags_service.py
+│ │ ├── view_service.py
 │ │ ├── workbench_service.py
 │ │ ├── make_filters.py
 │ │ └── mapper.py
@@ -156,6 +159,7 @@ flowchart TD
         TaskRouter[tasks]
         TagRouter[tags]
         WorkbenchRouter[workbenches]
+        ViewRouter[views]
     end
     Router --> Services
 
@@ -164,6 +168,7 @@ flowchart TD
         TaskCollector[task_collector]
         TagService[tags_service]
         WorkbenchService[workbench_service]
+        ViewService[view_service]
         FilterFactory[make_filters]
     end
     AuthRouter --> Security
@@ -174,6 +179,7 @@ flowchart TD
 
     TagRouter --> TagService
     WorkbenchRouter --> WorkbenchService
+    ViewRouter --> ViewService
 
     TaskCollector --> FilterFactory
     Services --> ORM
@@ -230,7 +236,7 @@ flowchart TD
 - [X] CRUD de Tasks
 - [X] Router Tags
 - [X] Integração com Workbenches
-- [ ] Filtros mais avançados (views reutilizáveis)
+- [X] Filtros mais avançados (views reutilizáveis)
 - [ ] Evolução do domínio de Tags
 - [ ] Refatorações e melhorias arquiteturais contínuas
 
