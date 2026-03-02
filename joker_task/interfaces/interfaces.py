@@ -148,6 +148,10 @@ class ViewServiceInterface(ABC):
     ) -> None:
         pass  # pragma: no cover
 
+    @abstractmethod
+    async def delete_view(self, user: User, id_view: int) -> None:
+        pass  # pragma: no cover
+
 
 class MapperInterface(ABC):
     @staticmethod

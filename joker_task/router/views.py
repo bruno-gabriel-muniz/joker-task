@@ -148,3 +148,11 @@ async def delete_view_filter(
     await view_srv.delete_view_filter(user, id_view, id_filter)
 
     await session.commit()
+
+
+@views_router.delete('/{id_view}', status_code=HTTPStatus.NO_CONTENT)
+async def delete_view(
+    id_view: int, user: T_User, session: T_Session, view_srv: T_ViewService
+):
+    await view_srv.delete_view(user, id_view)
+    await session.commit()

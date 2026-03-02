@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from joker_task.db.models import View
+from joker_task.db.models import Filter, View
 
 
 @pytest.mark.asyncio
@@ -539,3 +539,63 @@ def test_delete_view_filter_not_found(
     data = rsp.json()
 
     assert data['detail'] == 'filter not found'
+
+
+@pytest.mark.asyncio
+async def test_delete_view(
+    client: TestClient,
+    session: AsyncSession,
+    users: list[dict],
+    views: list[dict],
+    filters: list[dict],
+):
+    view = views[0]
+
+    rsp = client.delete(
+        f'/views/{view["id_view"]}',
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NO_CONTENT
+
+    view_db = await session.scalar(
+        select(View).where(View.id_view == view['id_view']),
+    )
+
+    assert view_db is None
+
+    filters_db = await session.scalar(
+        select(Filter).where(Filter.id_view == view['id_view'])
+    )
+
+    assert filters_db is None
+
+
+def test_delete_view_not_found(client: TestClient, users: list[dict]):
+    rsp = client.delete(
+        '/views/999',
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NOT_FOUND
+
+    data = rsp.json()
+
+    assert data['detail'] == 'view not found'
+
+
+def test_delete_view_other_user(
+    client: TestClient, users: list[dict], views: list[dict]
+):
+    view = views[0]
+
+    rsp = client.delete(
+        f'/views/{view["id_view"]}',
+        headers={'Authorization': f'Bearer {users[1]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.NOT_FOUND
+
+    data = rsp.json()
+
+    assert data['detail'] == 'view not found'

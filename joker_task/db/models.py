@@ -189,7 +189,9 @@ class View:
 
     name: Mapped[str] = mapped_column(String, nullable=False)
     filters: Mapped[List['Filter']] = relationship(
-        back_populates='view', init=False
+        back_populates='view',
+        init=False,
+        cascade='all, delete-orphan',
     )
     id_view: Mapped[int] = mapped_column(
         Integer, primary_key=True, init=False, autoincrement=True

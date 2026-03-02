@@ -196,6 +196,10 @@ class ViewService(ViewServiceInterface):
 
         await self.session.delete(filter_db)
 
+    async def delete_view(self, user: User, id_view: int) -> None:
+        view_db = await self.get_view_by_id(user, id_view)
+        await self.session.delete(view_db)
+
     @staticmethod
     def _make_filter_db(view_db: View, filter_schema: FilterSchema) -> Filter:
         return Filter(
