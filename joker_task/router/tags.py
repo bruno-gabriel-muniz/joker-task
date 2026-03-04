@@ -1,10 +1,11 @@
 from http import HTTPStatus
+from typing import Sequence
 
 from fastapi import APIRouter
 
 from joker_task.schemas import (
     TagPublic,
-    TagsSchema,
+    TagSchema,
     TagUpdate,
 )
 from joker_task.service.dependencies import (
@@ -21,13 +22,13 @@ tags_router = APIRouter(prefix='/tags', tags=['tags'])
     '/', response_model=list[TagPublic], status_code=HTTPStatus.CREATED
 )
 async def create_tag(
-    tags: TagsSchema,
+    tags: Sequence[TagSchema],
     user: T_User,
     session: T_Session,
     tags_srv: T_TagService,
     mapper: T_Mapper,
 ):
-    tags_db = await tags_srv.get_or_create_tags(user, tags.names)
+    tags_db = await tags_srv.get_or_create_tags(user, tags)
 
     await session.commit()
 
@@ -57,11 +58,14 @@ async def update_tag(  # noqa: PLR0913, PLR0917
     tags_srv: T_TagService,
     mapper: T_Mapper,
 ):
-    await tags_srv.check_tag_name_exists(user, data.name, id)
-
     tag_db = await tags_srv.collect_tag_by_id(user, id)
 
-    tag_db.name = data.name
+    if data.name:
+        await tags_srv.check_tag_name_exists(user, data.name, id)
+        tag_db.name = data.name
+
+    if data.color_hex:
+        tag_db.color_hex = data.color_hex
 
     session.add(tag_db)
 

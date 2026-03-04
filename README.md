@@ -237,6 +237,7 @@ flowchart TD
 - [X] Router Tags
 - [X] Integração com Workbenches
 - [X] Filtros mais avançados (views reutilizáveis)
-- [ ] Evolução do domínio de Tags
+- [X] Evolução do domínio de Tags
+- [ ] Implementação do sistema de repetição de tarefas
 - [ ] Refatorações e melhorias arquiteturais contínuas
 

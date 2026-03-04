@@ -96,16 +96,30 @@ async def tags(session: AsyncSession, users) -> list[dict[str, Any]]:
         await session.scalars(select(User).order_by(User.email))
     ).all()
 
-    tag_test_filters = Tag('test_filters', users[0]['email'], users_in_db[0])
+    tag_test_filters = Tag(
+        'test_filters', '#000000', users[0]['email'], users_in_db[0]
+    )
 
-    tag_test_none = Tag('test_none', users[0]['email'], users_in_db[0])
+    tag_test_none = Tag(
+        'test_none', '#FFFFFF', users[0]['email'], users_in_db[0]
+    )
 
     session.add(tag_test_filters)
     session.add(tag_test_none)
 
     out = [
-        {'name': 'test_filters', 'user_email': users[0]['email'], 'id_tag': 1},
-        {'name': 'test_none', 'user_email': users[0]['email'], 'id_tag': 2},
+        {
+            'name': 'test_filters',
+            'color_hex': '#000000',
+            'user_email': users[0]['email'],
+            'id_tag': 1,
+        },
+        {
+            'name': 'test_none',
+            'color_hex': '#FFFFFF',
+            'user_email': users[0]['email'],
+            'id_tag': 2,
+        },
     ]
 
     return out

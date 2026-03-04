@@ -8,6 +8,7 @@ from joker_task.schemas import (
     FilterPublic,
     FilterSchema,
     TagPublic,
+    TagSchema,
     TaskPublic,
     UserPublic,
     ViewPublic,
@@ -40,7 +41,7 @@ class StrategyMakeFilterInterface(ABC):
 class TagServiceInterface(ABC):
     @abstractmethod
     async def get_or_create_tags(
-        self, user: User, tag_names: Sequence[str] | None
+        self, user: User, tags: Sequence[TagSchema] | None
     ) -> list[Tag]:
         pass  # pragma: no cover
 
@@ -63,8 +64,8 @@ class TagServiceInterface(ABC):
         self,
         user: User,
         task: Task,
-        tags_add: Sequence[str] | None,
-        tags_remove: Sequence[str] | None,
+        tags_add: Sequence[TagSchema] | None,
+        tags_remove: Sequence[TagSchema] | None,
     ) -> None:
         pass  # pragma: no cover
 
@@ -162,11 +163,6 @@ class MapperInterface(ABC):
     @staticmethod
     @abstractmethod
     def map_task_public(task_db: Task) -> TaskPublic:
-        pass  # pragma: no cover
-
-    @staticmethod
-    @abstractmethod
-    def map_tag_str(tag_db: Tag) -> str:
         pass  # pragma: no cover
 
     @staticmethod

@@ -47,7 +47,10 @@ def test_create_full_task(client: TestClient, users, workbenches):
             'title': 'testar o JokerTask',
             'description': 'testando agora',
             'done': False,
-            'tags': ['test1', 'test2'],
+            'tags': [
+                {'name': 'test1', 'color_hex': '#888888'},
+                {'name': 'test2'},
+            ],
             'workbenches': [1, 2],
             'reminder': reminder.isoformat(),
             'repetition': '0111110',
@@ -66,7 +69,16 @@ def test_create_full_task(client: TestClient, users, workbenches):
     assert data['title'] == 'testar o JokerTask'
     assert data['description'] == 'testando agora'
     assert data['done'] is False
-    assert sorted(data['tags']) == sorted(['test1', 'test2'])
+    assert data['tags'] is not None
+    if data['tags'][0]['name'] == 'test1':
+        assert data['tags'][0]['color_hex'] == '#888888'
+        assert data['tags'][1]['name'] == 'test2'
+        assert data['tags'][1]['color_hex'] is None
+    else:
+        assert data['tags'][1]['color_hex'] == '#888888'
+        assert data['tags'][1]['name'] == 'test1'
+        assert data['tags'][0]['color_hex'] is None
+        assert data['tags'][0]['name'] == 'test2'
     assert sorted(data['workbenches']) == [1, 2]
     assert data['reminder'] == reminder.isoformat()
     assert data['repetition'] == '0111110'
@@ -134,9 +146,8 @@ async def test_update_task(
         'title': f'Tarefa {id_test} atualizada',
         'description': 'Descrição atualizada',
         'done': True,
-        'tags_add': ['atualizada1', 'atualizada2'],
-        'tags_remove': ['test_none'],
-        'tags': ['atualizada1', 'atualizada2', 'test_filters'],
+        'tags_add': [{'name': 'atualizada1'}, {'name': 'atualizada2'}],
+        'tags_remove': [{'name': 'test_none'}],
         'workbenches_add': [1],
         'workbenches_remove': [2],
         'workbenches': [1],
@@ -156,7 +167,13 @@ async def test_update_task(
     data.pop('created_at')
     data.pop('id_task')
     data.pop('user_email')
-    data['tags'] = sorted(data['tags'])
+    rsp_tags = data.pop('tags')
+
+    espec_tags = [
+        {'name': 'atualizada1'},
+        {'name': 'atualizada2'},
+        {'name': 'test_filters', 'color_hex': '#000000'},
+    ]
 
     assert data['state'] == 'InProgress'  # value preserved from before
     assert data['reminder'] is None  # value preserved from before
@@ -171,6 +188,12 @@ async def test_update_task(
 
     assert data == new_data
 
+    assert rsp_tags is not None
+    assert len(rsp_tags) == len(espec_tags)
+    assert sorted(tag['name'] for tag in rsp_tags) == sorted([
+        tag['name'] for tag in espec_tags
+    ])
+
     task_assert = await session.scalar(
         select(Task)
         .options(selectinload(Task.tags))
@@ -182,7 +205,7 @@ async def test_update_task(
     assert task_assert.description == new_data['description']
     assert task_assert.done is True
     assert sorted(tag.name for tag in task_assert.tags) == sorted(
-        new_data['tags']
+        tag['name'] for tag in espec_tags
     )
     assert task_assert.state == 'InProgress'  # value preserved from before
     assert task_assert.priority == new_data['priority']

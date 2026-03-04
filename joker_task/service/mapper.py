@@ -38,7 +38,7 @@ class Mapper(MapperInterface):
             title=task_db.title,
             description=task_db.description,
             done=task_db.done,
-            tags=[Mapper.map_tag_str(tag) for tag in task_db.tags],
+            tags=[Mapper.map_tag_public(tag) for tag in task_db.tags],
             workbenches=[
                 workbench.id_workbench for workbench in task_db.workbenches
             ],
@@ -53,16 +53,12 @@ class Mapper(MapperInterface):
         )
 
     @staticmethod
-    def map_tag_str(tag_db: Tag) -> str:
-        logger.debug(f'mapping tag {tag_db.id_tag} to str')
-        return tag_db.name
-
-    @staticmethod
     def map_tag_public(tag_db: Tag) -> TagPublic:
         logger.debug(f'mapping tag {tag_db.id_tag} to TagPublic')
 
         return TagPublic(
             name=tag_db.name,
+            color_hex=tag_db.color_hex,
             id_tag=tag_db.id_tag,
             user_email=tag_db.user_email,
             created_at=tag_db.created_at,

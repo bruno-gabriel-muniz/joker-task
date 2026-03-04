@@ -123,6 +123,7 @@ class Tag:
         Integer, primary_key=True, init=False, autoincrement=True
     )
     name: Mapped[str] = mapped_column(String, nullable=False)
+    color_hex: Mapped[str | None] = mapped_column(String, nullable=True)
 
     user_email: Mapped[str] = mapped_column(ForeignKey('users.email'))
     user: Mapped['User'] = relationship(back_populates='tags')

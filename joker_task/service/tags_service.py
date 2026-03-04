@@ -1,3 +1,4 @@
+import re
 from http import HTTPStatus
 from typing import Annotated, Sequence
 
@@ -9,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from joker_task.db.database import get_session
 from joker_task.db.models import Tag, Task, User
 from joker_task.interfaces.interfaces import TagServiceInterface
+from joker_task.schemas import TagSchema
 
 T_Session = Annotated[AsyncSession, Depends(get_session)]
 
@@ -18,19 +20,19 @@ class TagService(TagServiceInterface):
         self.session = session
 
     async def get_or_create_tags(
-        self, user: User, tag_names: Sequence[str] | None
+        self, user: User, tags: Sequence[TagSchema] | None
     ) -> list[Tag]:
         logger.info(f'getting or creating tags for user: {user.email}')
 
-        if not tag_names:
+        if not tags:
             return []
 
-        tag_names = list(set(tag_names))
+        if len(tags) != len({tag.name for tag in tags}):
+            raise HTTPException(
+                HTTPStatus.BAD_REQUEST, 'duplicate tag names in request'
+            )
 
-        result = [
-            await self._get_or_create_tag(user, tag_name)
-            for tag_name in tag_names
-        ]
+        result = [await self._get_or_create_tag(user, tag) for tag in tags]
 
         logger.info(
             f'got or created {len(result)} tags for user: {user.email}'
@@ -82,35 +84,48 @@ class TagService(TagServiceInterface):
         self,
         user: User,
         task: Task,
-        tags_add: Sequence[str] | None,
-        tags_remove: Sequence[str] | None,
+        tags_add: Sequence[TagSchema] | None,
+        tags_remove: Sequence[TagSchema] | None,
     ) -> None:
         logger.info(
             f'updating tags of task with id = {task.id_task} '
             + f'for user {user.email}'
         )
-        current_tags = {tag.name for tag in task.tags}
+        current_tags = {tag.name: tag.color_hex for tag in task.tags}
 
         if tags_add:
-            current_tags.update(tags_add)
+            current_tags.update({tag.name: tag.color_hex for tag in tags_add})
 
         if tags_remove:
-            current_tags.difference_update(tags_remove)
+            for tag in tags_remove:
+                current_tags.pop(tag.name, None)
 
-        task.tags = await self.get_or_create_tags(user, list(current_tags))
+        tags = [
+            TagSchema(name=name, color_hex=color)
+            for name, color in current_tags.items()
+        ]
 
-    async def _get_or_create_tag(self, user: User, tag_name: str) -> Tag:
-        tag = await self.session.scalar(
+        task.tags = await self.get_or_create_tags(user, tags)
+
+    async def _get_or_create_tag(self, user: User, tag: TagSchema) -> Tag:
+        tag_db = await self.session.scalar(
             select(Tag).where(
-                Tag.user_email == user.email, Tag.name == tag_name
+                Tag.user_email == user.email, Tag.name == tag.name
             )
         )
 
-        if not tag:
-            tag = Tag(tag_name, user.email, user)
-            logger.debug(f'creating new tag: {tag_name}')
-            self.session.add(tag)
-        else:
-            logger.debug(f'tag found: {tag_name}')
+        if not tag_db:
+            if tag.color_hex and not re.match(
+                r'^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$', tag.color_hex
+            ):
+                raise HTTPException(
+                    HTTPStatus.BAD_REQUEST, 'invalid color_hex format'
+                )
 
-        return tag
+            tag_db = Tag(tag.name, tag.color_hex, user.email, user)
+            logger.debug(f'creating new tag: {tag}')
+            self.session.add(tag_db)
+        else:
+            logger.debug(f'tag found: {tag}')
+
+        return tag_db

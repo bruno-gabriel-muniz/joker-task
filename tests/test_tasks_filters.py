@@ -95,16 +95,16 @@ def test_get_task_by_filter_with_tag(client: TestClient, users, tasks):
 
     assert len(data['responses']) == rsp_qnt_elements
     if data['responses'][0]['id_task'] == tasks[0]['id_task']:
-        assert data['responses'][0]['tags'] == [
-            tag.name for tag in tasks[0]['tags']
-        ]
-        assert data['responses'][1]['tags'] == [
-            tag.name for tag in tasks[1]['tags']
-        ]
+        assert sorted([
+            tag['name'] for tag in data['responses'][0]['tags']
+        ]) == sorted([tag.name for tag in tasks[0]['tags']])
+        assert sorted([
+            tag['name'] for tag in data['responses'][1]['tags']
+        ]) == sorted([tag.name for tag in tasks[1]['tags']])
     else:
-        assert data['responses'][0]['tags'] == [
-            tag.name for tag in tasks[1]['tags']
-        ]
-        assert data['responses'][1]['tags'] == [
-            tag.name for tag in tasks[0]['tags']
-        ]
+        assert sorted([
+            tag['name'] for tag in data['responses'][0]['tags']
+        ]) == sorted([tag.name for tag in tasks[1]['tags']])
+        assert sorted([
+            tag['name'] for tag in data['responses'][1]['tags']
+        ]) == sorted([tag.name for tag in tasks[0]['tags']])

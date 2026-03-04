@@ -33,16 +33,19 @@ class Token(BaseModel):
     token_type: str = 'bearer'
 
 
-class TagsSchema(BaseModel):
-    names: Sequence[str]
+class TagSchema(BaseModel):
+    name: str
+    color_hex: str | None = None
 
 
 class TagUpdate(BaseModel):
-    name: str
+    name: str | None = None
+    color_hex: str | None = None
 
 
 class TagPublic(BaseModel):
     name: str
+    color_hex: str | None = None
     id_tag: int
     user_email: EmailStr
     created_at: datetime
@@ -77,7 +80,7 @@ class TaskSchema(BaseModel):
     title: str
     description: str | None = None
     done: bool | None = None
-    tags: Sequence[str] = Field(default_factory=list)
+    tags: Sequence[TagSchema] = Field(default_factory=list)
     workbenches: Sequence[int] = Field(default_factory=list)
     reminder: datetime | None = None
     repetition: str | None = None
@@ -89,8 +92,8 @@ class TaskUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
     done: bool | None = None
-    tags_add: Sequence[str] | None = None
-    tags_remove: Sequence[str] | None = None
+    tags_add: Sequence[TagSchema] | None = None
+    tags_remove: Sequence[TagSchema] | None = None
     workbenches_add: Sequence[int] | None = None
     workbenches_remove: Sequence[int] | None = None
     reminder: datetime | None = None
@@ -101,6 +104,7 @@ class TaskUpdate(BaseModel):
 
 class TaskPublic(TaskSchema):
     id_task: int
+    tags: Sequence[TagPublic] = Field(default_factory=list)
     user_email: EmailStr
     created_at: datetime
     updated_at: datetime

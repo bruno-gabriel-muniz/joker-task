@@ -18,7 +18,10 @@ async def test_create_tags(
     expected_total_tags = 3
     rsp = client.post(
         '/tags',
-        json={'names': ['test1', tags[0]['name']]},
+        json=[
+            {'name': 'test1', 'color_hex': '#000000'},
+            {'name': tags[0]['name'], 'color_hex': tags[0]['color_hex']},
+        ],
         headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
@@ -40,12 +43,37 @@ async def test_create_tags(
     assert len(tags_db) == expected_total_tags
 
 
+def test_create_tags_with_duplicate_names(client: TestClient, users):
+    rsp = client.post(
+        '/tags',
+        json=[
+            {'name': 'test1', 'color_hex': '#000000'},
+            {'name': 'test1', 'color_hex': '#FFFFFF'},
+        ],
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.BAD_REQUEST
+    assert rsp.json()['detail'] == 'duplicate tag names in request'
+
+
+def test_create_tag_with_invalid_color(client: TestClient, users):
+    rsp = client.post(
+        '/tags',
+        json=[{'name': 'test1', 'color_hex': 'invalid_color'}],
+        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    )
+
+    assert rsp.status_code == HTTPStatus.BAD_REQUEST
+    assert rsp.json()['detail'] == 'invalid color_hex format'
+
+
 def test_created_at_tag(client: TestClient, users):
     time = datetime.now(ZoneInfo('UTC'))
     with freeze_time(time):
         rsp = client.post(
             '/tags',
-            json={'names': ['test1']},
+            json=[{'name': 'test1', 'color_hex': '#000000'}],
             headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
         )
 
@@ -73,6 +101,9 @@ def test_list_tags(client: TestClient, users, tags):
     assert tags[0]['name'] in returned
     assert tags[1]['name'] in returned
 
+    assert tags[0]['color_hex'] == returned[tags[0]['name']]['color_hex']
+    assert tags[1]['color_hex'] == returned[tags[1]['name']]['color_hex']
+
     assert returned[tags[0]['name']]['id_tag'] == tags[0]['id_tag']
     assert returned[tags[1]['name']]['id_tag'] == tags[1]['id_tag']
 
@@ -84,7 +115,7 @@ async def test_update_tag(
     new_name = 'updated_name'
     rsp = client.patch(
         f'/tags/{tags[0]["id_tag"]}',
-        json={'name': new_name},
+        json={'name': new_name, 'color_hex': '#FFFFFF'},
         headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
@@ -94,6 +125,7 @@ async def test_update_tag(
 
     assert data['id_tag'] == tags[0]['id_tag']
     assert data['name'] == new_name
+    assert data['color_hex'] == '#FFFFFF'
 
     tag_db = await session.scalar(
         select(Tag).where(Tag.id_tag == tags[0]['id_tag'])
@@ -101,6 +133,7 @@ async def test_update_tag(
 
     assert tag_db is not None
     assert tag_db.name == new_name
+    assert tag_db.color_hex == '#FFFFFF'
 
 
 @pytest.mark.asyncio
