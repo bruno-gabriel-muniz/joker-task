@@ -8,6 +8,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
 
     env:
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -23,9 +26,6 @@ jobs:
 
       - name: Copia os arquivos do repositório
         uses: actions/checkout@v4
-
-      - name: Entrando na pasta do BackEnd
-        run: cd backend
 
       - name: Instalar o poetry
         run: pipx install poetry
