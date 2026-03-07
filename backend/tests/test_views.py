@@ -450,23 +450,23 @@ async def test_update_view_filter(
     assert data['state'] == ['IN_PROGRESS']
     assert data['priority'] == [1, 10]
 
-    view_db = await session.scalar(
-        select(View)
-        .where(View.id_view == view['id_view'])
-        .options(selectinload(View.filters)),
+    filter_db = await session.scalar(
+        select(Filter).where(
+            (Filter.id_view == view['id_view']),
+            (Filter.id_filter == filter['id_filter']),
+        )
     )
 
-    assert view_db is not None
-    assert len(view_db.filters) == len(filters)
-    assert view_db.filters[0].id_filter == filter['id_filter']
-    assert view_db.filters[0].title == 'Updated Title'
-    assert view_db.filters[0].description == 'Updated Description'
-    assert view_db.filters[0].done is False
-    assert view_db.filters[0].tags == ['tag4']
-    assert view_db.filters[0].reminder is None
-    assert view_db.filters[0].repetition is None
-    assert view_db.filters[0].state == ['IN_PROGRESS']
-    assert view_db.filters[0].priority == [1, 10]
+    assert filter_db is not None
+    assert filter_db.id_filter == filter['id_filter']
+    assert filter_db.title == 'Updated Title'
+    assert filter_db.description == 'Updated Description'
+    assert filter_db.done is False
+    assert filter_db.tags == ['tag4']
+    assert filter_db.reminder is None
+    assert filter_db.repetition is None
+    assert filter_db.state == ['IN_PROGRESS']
+    assert filter_db.priority == [1, 10]
 
 
 def test_update_view_filter_not_found(

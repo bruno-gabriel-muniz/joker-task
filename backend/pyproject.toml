@@ -27,6 +27,9 @@ ruff = "^0.13.2"
 pytest-asyncio = "^1.2.0"
 ipdb = "^0.13.13"
 freezegun = "^1.5.5"
+testcontainers = "^4.14.1"
+asyncpg = {extras = ["gssauth"], version = "^0.31.0"}
+psycopg = "^3.2.10"
 
 [tool.ruff]
 line-length = 79
@@ -52,7 +55,7 @@ concurrency = ["thread", "greenlet"]
 lint = 'ruff check'
 format = 'ruff format'
 post_format = 'ruff check --fix'
-run = 'fastapi dev joker_task/app.py'
+run = 'fastapi dev backend/joker_task/app.py'
 pre_testf = 'task format'
 testf = 'pytest -s -x --cov=joker_task -vv'
 post_testf = 'coverage html'

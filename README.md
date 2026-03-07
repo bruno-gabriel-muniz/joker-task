@@ -238,6 +238,8 @@ flowchart TD
 - [X] Integração com Workbenches
 - [X] Filtros mais avançados (views reutilizáveis)
 - [X] Evolução do domínio de Tags
+- [X] Dockerizar o backend
+- [ ] Iniciar desenvolvimento do frontend
 - [ ] Implementação do sistema de repetição de tarefas
 - [ ] Refatorações e melhorias arquiteturais contínuas
 

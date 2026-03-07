@@ -1,0 +1,17 @@
+services:
+
+  api:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: joker
+      POSTGRES_PASSWORD: joker
+      POSTGRES_DB: jokertask
+    ports:
+      - "5432:5432"
