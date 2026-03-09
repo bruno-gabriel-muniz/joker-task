@@ -1,3 +1,4 @@
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Top Language](https://img.shields.io/github/languages/top/bruno-gabriel-muniz/joker-task)
 ![Build](https://github.com/bruno-gabriel-muniz/joker-task/actions/workflows/ci.yaml/badge.svg)
 [![codecov](https://codecov.io/gh/bruno-gabriel-muniz/joker-task/branch/main/graph/badge.svg)](https://codecov.io/gh/bruno-gabriel-muniz/joker-task)
@@ -6,7 +7,7 @@
 
 ## Sobre o projeto
 
-O **joker-task** é uma API de gerenciamento de tarefas em desenvolvimento que busca ser apenas o *espaço em branco* entre você e a conclusão das suas tarefas.
+O **joker-task** é uma aplicação web de gerenciamento de tarefas em desenvolvimento que busca ser apenas o *espaço em branco* entre você e a conclusão das suas tarefas.
 
 A ideia central é oferecer um sistema de organização **flexível**, **simples de manter** e **agnóstico a metodologias** específicas de produtividade.
 
@@ -42,8 +43,8 @@ Atualmente, o projeto conta com:
 - autenticação e autorização
 - CRUD de tarefas e tags por usuário
 - filtragem dinâmica de tarefas
-- views reutilizáveis
 - associação de tarefas via workbenches
+- views reutilizáveis
 - arquitetura modular com separação clara de responsabilidades
 - testes automatizados com cobertura
 
@@ -56,6 +57,7 @@ O projeto está em evolução contínua, com foco em **qualidade de código**, *
 - [Tecnologias Utilizadas](#tecnologias-utilizadas)
 - [Como Começar?](#como-começar)
 - [Estrutura do Projeto](#estrutura-do-projeto)
+- [Database Schema](#database-schema)
 - [Arquitetura](#arquitetura)
 - [Próximos Passos](#próximos-passos)
 
@@ -78,8 +80,15 @@ O projeto está em evolução contínua, com foco em **qualidade de código**, *
 
 > O projeto foi pensado para ser usado via API (Swagger disponível em /docs).
 
+
+#### Como baixar o projeto?
+```
+git clone https://github.com/bruno-gabriel-muniz/joker-task
+```
+
 #### Como instalar as dependências?
 ```
+cd joker-task/backend
 poetry install
 ```
 
@@ -100,48 +109,128 @@ poetry run task testf
 poetry run task format
 ```
 
+#### Rodando com Docker
+```
+docker compose up --build
+```
 ---
 
 ## Estrutura do Projeto
 
 ```
 .
-├── .github
-│ └── workflows
-│ └── ci.yaml
-├── joker_task
-│ ├── db
-│ │ ├── database.py
-│ │ └── models.py
-│ ├── router
-│ │ ├── auth.py
-│ │ ├── tasks.py
-│ │ ├── tags.py
-│ │ ├── views.py
-│ │ └── workbenches.py
-│ ├── service
-│ │ ├── security.py
-│ │ ├── task_collector.py
-│ │ ├── tags_service.py
-│ │ ├── view_service.py
-│ │ ├── workbench_service.py
-│ │ ├── make_filters.py
-│ │ └── mapper.py
-│ ├── interfaces
-│ │ └── interfaces.py
-│ ├── app.py
-│ ├── schemas.py
-│ └── settings.py
-├── migrations
-│ ├── env.py
-│ ├── README
-│ └── versions
-│ └── ...
-├── tests
-│ └── ...
-├── pyproject.toml
+├── backend
+│   ├── joker_task
+│   │   ├── db
+│   │   │   ├── database.py
+│   │   │   └── models.py
+│   │   ├── interfaces
+│   │   │   └── interfaces.py
+│   │   ├── router
+│   │   │   ├── auth.py
+│   │   │   ├── tags.py
+│   │   │   ├── tasks.py
+│   │   │   ├── views.py
+│   │   │   └── workbenches.py
+│   │   ├── service
+│   │   │   ├── dependencies.py
+│   │   │   ├── make_filters.py
+│   │   │   ├── mapper.py
+│   │   │   ├── security.py
+│   │   │   ├── tags_service.py
+│   │   │   ├── task_collector.py
+│   │   │   ├── view_service.py
+│   │   │   └── workbench_service.py
+│   │   ├── __init__.py
+│   │   ├── app.py
+│   │   ├── schemas.py
+│   │   └── settings.py
+│   ├── migrations
+│   │   └── ...
+│   ├── tests
+│   │   └── ...
+│   ├── poetry.lock
+│   ├── pyproject.toml
+│   └── README.md
+├── docker-compose.yml
+├── LICENSE
 └── README.md
 ```
+---
+
+## Database Schema
+
+```mermaid
+erDiagram
+
+
+    USERS {
+        string email
+        string password_hash
+        datetime created_at
+    }
+
+    TASKS {
+        int id
+        string title
+        text description
+        boolean done
+        json repetition
+        json history
+        int workbench_id
+        datetime created_at
+    }
+
+    WORKBENCHS {
+        int id
+        string name
+        datetime created_at
+    }
+
+    TASK_WORKBENCHS {
+        int task_id
+        int workbench_id
+    }
+
+    TAGS {
+        int id
+        string name
+        string color
+        datetime created_at
+    }
+
+    TASK_TAGS {
+        int task_id
+        int tag_id
+    }
+
+    VIEWS {
+        int id
+        string name
+        int workbench_id
+        datetime created_at
+    }
+
+    VIEW_FILTERS {
+        int id
+        int view_id
+        json filters
+    }
+
+    USERS ||--o{ TASKS : owns
+    USERS ||--o{ TAGS : owns
+    USERS ||--o{ WORKBENCHS : owns
+    USERS ||--o{ VIEWS : owns
+
+    TASKS ||--o{ TASK_TAGS : has
+    TAGS ||--o{ TASK_TAGS : tagged
+
+    TASKS ||--o{ TASK_WORKBENCHS : has
+    WORKBENCHS ||--o{ TASK_WORKBENCHS : contains
+
+    VIEWS ||--o{ VIEW_FILTERS : has
+```
+
 ---
 
 ## Arquitetura
@@ -198,6 +287,7 @@ flowchart TD
 
     Mapper --> Router
 ```
+---
 
 ### Principais módulos
 
@@ -215,6 +305,8 @@ flowchart TD
 
 - **workbench_service**: Gerencia coleta, verificação de conflitos e associação de workbenches com as tasks.
 
+- **view_service**: Gerencia criação, reutilização, verificação de conflitos e associação de views com as tasks.
+
 - **mapper**: Converte modelos ORM em schemas públicos, desacoplando banco de dados da API.
 
 ---
@@ -226,6 +318,7 @@ flowchart TD
 - `User → tasks → (tags_service, task_collector, workbench_service) → mapper`
 - `User → tags → tags_service → mapper`
 - `User → workbenches → workbench_service → mapper`
+- `User → views → view_service → (task_collector) → mapper`
 
 ---
 
