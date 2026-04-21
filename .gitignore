@@ -208,3 +208,26 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Dependências
+node_modules/
+# Pasta de build e arquivos temporários
+dist/
+tmp/
+out-tsc/
+# Arquivos gerados pelo Angular CLI
+angular-*.js
+# Variáveis de ambiente e segredos
+.env
+# IDEs e editores
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+# Sistema
+.DS_Store
+Thumbs.db
+
