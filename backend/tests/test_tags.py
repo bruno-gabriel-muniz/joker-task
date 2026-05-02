@@ -13,16 +13,15 @@ from joker_task.db.models import Tag
 
 @pytest.mark.asyncio
 async def test_create_tags(
-    client: TestClient, session: AsyncSession, tags, users
+    auth_client_alice: TestClient, session: AsyncSession, tags
 ):
-    expected_total_tags = 3
-    rsp = client.post(
+    expected_total_tags = len(tags) + 1
+    rsp = auth_client_alice.post(
         '/tags',
         json=[
             {'name': 'test1', 'color_hex': '#000000'},
             {'name': tags[0]['name'], 'color_hex': tags[0]['color_hex']},
         ],
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.CREATED
@@ -43,38 +42,35 @@ async def test_create_tags(
     assert len(tags_db) == expected_total_tags
 
 
-def test_create_tags_with_duplicate_names(client: TestClient, users):
-    rsp = client.post(
+def test_create_tags_with_duplicate_names(auth_client_alice: TestClient):
+    rsp = auth_client_alice.post(
         '/tags',
         json=[
             {'name': 'test1', 'color_hex': '#000000'},
             {'name': 'test1', 'color_hex': '#FFFFFF'},
         ],
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.BAD_REQUEST
     assert rsp.json()['detail'] == 'duplicate tag names in request'
 
 
-def test_create_tag_with_invalid_color(client: TestClient, users):
-    rsp = client.post(
+def test_create_tag_with_invalid_color(auth_client_bob: TestClient):
+    rsp = auth_client_bob.post(
         '/tags',
         json=[{'name': 'test1', 'color_hex': 'invalid_color'}],
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.BAD_REQUEST
     assert rsp.json()['detail'] == 'invalid color_hex format'
 
 
-def test_created_at_tag(client: TestClient, users):
+def test_created_at_tag(auth_client_alice: TestClient):
     time = datetime.now(ZoneInfo('UTC'))
     with freeze_time(time):
-        rsp = client.post(
+        rsp = auth_client_alice.post(
             '/tags',
             json=[{'name': 'test1', 'color_hex': '#000000'}],
-            headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
         )
 
     assert rsp.status_code == HTTPStatus.CREATED
@@ -86,10 +82,9 @@ def test_created_at_tag(client: TestClient, users):
     assert expected.startswith(data[0]['created_at'][0:16])
 
 
-def test_list_tags(client: TestClient, users, tags):
-    rsp = client.get(
+def test_list_tags(auth_client_alice: TestClient, tags):
+    rsp = auth_client_alice.get(
         '/tags',
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -110,13 +105,12 @@ def test_list_tags(client: TestClient, users, tags):
 
 @pytest.mark.asyncio
 async def test_update_tag(
-    client: TestClient, session: AsyncSession, users, tags
+    auth_client_alice: TestClient, session: AsyncSession, tags
 ):
     new_name = 'updated_name'
-    rsp = client.patch(
+    rsp = auth_client_alice.patch(
         f'/tags/{tags[0]["id_tag"]}',
         json={'name': new_name, 'color_hex': '#FFFFFF'},
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -138,14 +132,13 @@ async def test_update_tag(
 
 @pytest.mark.asyncio
 async def test_update_at_tag(
-    client: TestClient, session: AsyncSession, users, tags
+    auth_client_alice: TestClient, session: AsyncSession, tags
 ):
     time = datetime.now(ZoneInfo('UTC'))
     with freeze_time(time):
-        rsp = client.patch(
+        rsp = auth_client_alice.patch(
             f'/tags/{tags[0]["id_tag"]}',
             json={'name': 'test1'},
-            headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
         )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -165,11 +158,10 @@ async def test_update_at_tag(
     )
 
 
-def test_update_tag_conflict(client: TestClient, users, tags):
-    rsp = client.patch(
-        f'/tags/{tags[0]["id_tag"]}',
-        json={'name': tags[1]['name']},
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+def test_update_tag_conflict(auth_client_bob: TestClient, tags):
+    rsp = auth_client_bob.patch(
+        f'/tags/{tags[2]["id_tag"]}',
+        json={'name': tags[3]['name']},
     )
 
     assert rsp.status_code == HTTPStatus.CONFLICT
@@ -178,12 +170,11 @@ def test_update_tag_conflict(client: TestClient, users, tags):
 
 @pytest.mark.asyncio
 async def test_delete_tag(
-    client: TestClient, session: AsyncSession, users, tags, tasks
+    auth_client_alice: TestClient, session: AsyncSession, tags
 ):
     id_tag = 1
-    rsp = client.delete(
+    rsp = auth_client_alice.delete(
         f'/tags/{id_tag}',
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.NO_CONTENT
@@ -194,11 +185,10 @@ async def test_delete_tag(
 
 
 @pytest.mark.asyncio
-async def test_delete_tag_not_found(client: TestClient, users, tags, tasks):
-    id_tag = 3
-    rsp = client.delete(
+async def test_delete_tag_not_found(auth_client_bob: TestClient, tags):
+    id_tag = len(tags) + 1
+    rsp = auth_client_bob.delete(
         f'/tags/{id_tag}',
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND
@@ -206,12 +196,11 @@ async def test_delete_tag_not_found(client: TestClient, users, tags, tasks):
 
 @pytest.mark.asyncio
 async def test_delete_tag_not_found_with_incorrect_user(
-    client: TestClient, users, tags, tasks
+    auth_client_bob: TestClient, tags
 ):
-    id_tag = 3
-    rsp = client.delete(
+    id_tag = 1
+    rsp = auth_client_bob.delete(
         f'/tags/{id_tag}',
-        headers={'Authorization': f'Bearer {users[1]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND

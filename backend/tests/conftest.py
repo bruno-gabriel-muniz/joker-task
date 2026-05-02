@@ -93,6 +93,34 @@ async def users(session) -> list[dict[str, str]]:
     return users
 
 
+def auth_client(client: TestClient, user: dict[str, str]) -> TestClient:
+    response = client.post(
+        '/login',
+        data={
+            'username': user['email'],
+            'password': user['password'],
+        },
+    )
+
+    cookies = response.cookies
+
+    client.cookies.update(cookies)
+
+    return client
+
+
+@pytest.fixture
+def auth_client_alice(client, users) -> TestClient:
+    client = auth_client(client, users[0])
+    return client
+
+
+@pytest.fixture
+def auth_client_bob(client, users) -> TestClient:
+    client = auth_client(client, users[1])
+    return client
+
+
 @pytest_asyncio.fixture
 async def tags(session: AsyncSession, users) -> list[dict[str, Any]]:
     users_in_db = (
@@ -107,8 +135,18 @@ async def tags(session: AsyncSession, users) -> list[dict[str, Any]]:
         'test_none', '#FFFFFF', users[0]['email'], users_in_db[0]
     )
 
+    tag_test_bob = Tag(
+        'test_bob', '#FF0000', users[1]['email'], users_in_db[1]
+    )
+
+    tag_test_bob2 = Tag(
+        'test_bob2', '#FF0000', users[1]['email'], users_in_db[1]
+    )
+
     session.add(tag_test_filters)
     session.add(tag_test_none)
+    session.add(tag_test_bob)
+    session.add(tag_test_bob2)
 
     out = [
         {
@@ -122,6 +160,18 @@ async def tags(session: AsyncSession, users) -> list[dict[str, Any]]:
             'color_hex': '#FFFFFF',
             'user_email': users[0]['email'],
             'id_tag': 2,
+        },
+        {
+            'name': 'test_bob',
+            'color_hex': '#FF0000',
+            'user_email': users[1]['email'],
+            'id_tag': 3,
+        },
+        {
+            'name': 'test_bob2',
+            'color_hex': '#FF0000',
+            'user_email': users[1]['email'],
+            'id_tag': 4,
         },
     ]
 
@@ -197,13 +247,18 @@ async def views(session: AsyncSession, users) -> list[dict[str, Any]]:
         'user_email': users[0]['email'],
         'id_view': 2,
     }
-    view3 = {
+    view_bob = {
         'name': 'view3',
         'user_email': users[1]['email'],
         'id_view': 3,
     }
+    view_bob2 = {
+        'name': 'view4',
+        'user_email': users[1]['email'],
+        'id_view': 4,
+    }
 
-    out = [view1, view2, view3]
+    out = [view1, view2, view_bob, view_bob2]
 
     view1_obj = View(
         name=view1['name'],
@@ -216,13 +271,20 @@ async def views(session: AsyncSession, users) -> list[dict[str, Any]]:
         user=users_in_db[0],
     )
     view3_obj = View(
-        name=view3['name'],
+        name=view_bob['name'],
         user_email=users[1]['email'],
         user=users_in_db[1],
     )
+    view4_obj = View(
+        name=view_bob2['name'],
+        user_email=users[1]['email'],
+        user=users_in_db[1],
+    )
+
     session.add(view1_obj)
     session.add(view2_obj)
     session.add(view3_obj)
+    session.add(view4_obj)
     await session.commit()
 
     return out
@@ -258,9 +320,12 @@ async def tasks(
         await session.scalars(select(User).order_by(User.email))
     ).all()
 
-    tag_test_filters, tag_test_none = await session.scalars(
-        select(Tag).order_by(Tag.id_tag)
-    )
+    (
+        tag_test_filters,
+        tag_test_none,
+        tag_test_bob,
+        tag_test_bob2,
+    ) = await session.scalars(select(Tag).order_by(Tag.id_tag))
 
     workbench1, workbench2, workbench3 = await session.scalars(
         select(Workbench).order_by(Workbench.name)
@@ -306,6 +371,7 @@ async def tasks(
             'user_email': users[1]['email'],
             'title': 'test',
             'done': 1,
+            'tags': [tag_test_bob, tag_test_bob2],
             'workbenches': [workbench3],
             'state': 'Done',
             'priority': 55,

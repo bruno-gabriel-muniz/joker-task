@@ -9,3 +9,5 @@ class Settings(BaseSettings):
     ALGORITHM: str
     SECRET_KEY: str
     ACCESS_TOKEN_EXPIRE: int
+    REFRESH_TOKEN_EXPIRE: int
+    PROD: bool

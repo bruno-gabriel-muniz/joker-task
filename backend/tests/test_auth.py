@@ -1,8 +1,8 @@
-# import ipdb
+from datetime import datetime, timedelta
 from http import HTTPStatus
 
 from fastapi.testclient import TestClient
-from jwt import decode
+from freezegun import freeze_time
 
 
 def test_create_user(client: TestClient):
@@ -45,46 +45,62 @@ def test_create_user_conflict(client: TestClient, users):
     assert data['detail'] == 'email or username already in use'
 
 
-def test_get_access_token(client: TestClient, users, settings):
+def test_login(client: TestClient, users):
     rsp = client.post(
-        '/token/',
+        '/login/',
         data={'username': users[0]['email'], 'password': users[0]['password']},
     )
 
     assert rsp.status_code == HTTPStatus.OK
-
-    data: dict = decode(
-        rsp.json()['access_token'], settings.SECRET_KEY, settings.ALGORITHM
-    )
-
-    assert 'exp' in data
-    assert data['sub'] == 'alice@example.com'
+    assert rsp.cookies.get('access_token') is not None
+    assert rsp.cookies.get('refresh_token') is not None
 
 
-def test_get_access_token_unauthorized(client: TestClient, users):
+def test_login_unauthorized(client: TestClient, users):
     rsp = client.post(
-        '/token/', data={'username': users[1]['email'], 'password': 'wrong'}
+        '/login/',
+        data={'username': users[0]['email'], 'password': 'wrong_password'},
     )
 
     assert rsp.status_code == HTTPStatus.UNAUTHORIZED
+    assert rsp.json()['detail'] == 'invalid email or password'
 
-    rsp = client.post(
-        '/token/',
-        data={'username': 'Bob@example.com', 'password': users[1]['password']},
-    )
+
+def test_refresh(auth_client_alice: TestClient):
+    token_before = auth_client_alice.cookies.get('access_token')
+
+    with freeze_time(datetime.now() + timedelta(minutes=20)):
+        rsp = auth_client_alice.post(
+            '/refresh/',
+            cookies={
+                'refresh_token': auth_client_alice.cookies['refresh_token']
+            },
+        )
+
+    assert rsp.status_code == HTTPStatus.OK
+    assert rsp.cookies.get('access_token') is not None
+    assert rsp.cookies.get('access_token') != token_before
+
+
+def test_refresh_invalid(client: TestClient):
+    rsp = client.post('/refresh/')
 
     assert rsp.status_code == HTTPStatus.UNAUTHORIZED
-
-    data = rsp.json()
-
-    assert data['detail'] == 'incorrect email or password'
+    assert rsp.json()['detail'] == 'missing refresh token'
 
 
-def test_update_user(client: TestClient, users):
-    rsp = client.put(
+def test_logout(auth_client_alice: TestClient):
+    rsp = auth_client_alice.post('/logout/')
+
+    assert rsp.status_code == HTTPStatus.OK
+    assert rsp.cookies.get('access_token') is None
+    assert rsp.cookies.get('refresh_token') is None
+
+
+def test_update_user(auth_client_alice: TestClient):
+    rsp = auth_client_alice.put(
         '/update_user/',
         json={'username': 'alice2', 'password': 'secret'},
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -95,11 +111,10 @@ def test_update_user(client: TestClient, users):
     assert 'password' not in data
 
 
-def test_update_user_conflict(client: TestClient, users):
-    rsp = client.put(
+def test_update_user_conflict(auth_client_bob: TestClient):
+    rsp = auth_client_bob.put(
         '/update_user/',
         json={'username': 'alice', 'password': 'euSouOBob'},
-        headers={'Authorization': f'Bearer {users[1]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.CONFLICT

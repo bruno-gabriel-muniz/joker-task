@@ -13,11 +13,12 @@ from joker_task.db.models import Task
 
 
 @pytest.mark.asyncio
-async def test_create_task(client: TestClient, session: AsyncSession, users):
-    rsp = client.post(
+async def test_create_task(
+    auth_client_alice: TestClient, session: AsyncSession, users
+):
+    rsp = auth_client_alice.post(
         '/tasks/',
         json={'title': 'testar o JokerTask', 'done': False},
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.CREATED
@@ -37,11 +38,11 @@ async def test_create_task(client: TestClient, session: AsyncSession, users):
     assert task_db.title == data['title']
 
 
-def test_create_full_task(client: TestClient, users, workbenches):
+def test_create_full_task(auth_client_alice: TestClient, users, workbenches):
     reminder = datetime.now()
     priority = 10
 
-    rsp = client.post(
+    rsp = auth_client_alice.post(
         '/tasks/',
         json={
             'title': 'testar o JokerTask',
@@ -57,7 +58,6 @@ def test_create_full_task(client: TestClient, users, workbenches):
             'state': 'TODO',
             'priority': priority,
         },
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.CREATED
@@ -86,17 +86,16 @@ def test_create_full_task(client: TestClient, users, workbenches):
     assert data['priority'] == priority
 
 
-def test_created_at_task(client: TestClient, users):
+def test_created_at_task(auth_client_alice: TestClient):
     time = datetime.now(ZoneInfo('UTC'))
     time_str = time.isoformat()
     with freeze_time(time):
-        rsp = client.post(
+        rsp = auth_client_alice.post(
             '/tasks/',
             json={
                 'title': 'test_created_at',
                 'done': False,
             },
-            headers={'Authorization': f'bearer {users[0]["access_token"]}'},
         )
 
     assert rsp.status_code == HTTPStatus.CREATED
@@ -106,13 +105,12 @@ def test_created_at_task(client: TestClient, users):
     assert time_str.startswith(data['created_at'][0:16])
 
 
-def test_updated_at_task(client: TestClient, users, tasks):
+def test_updated_at_task(auth_client_alice: TestClient, tasks):
     time = datetime.now(ZoneInfo('UTC'))
     with freeze_time(time):
-        rsp = client.patch(
-            '/tasks/4',
-            json={'title': 'Tarefa 4 atualizada'},
-            headers={'Authorization': f'bearer {users[1]["access_token"]}'},
+        rsp = auth_client_alice.patch(
+            '/tasks/1',
+            json={'title': 'Tarefa 1 atualizada'},
         )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -123,23 +121,22 @@ def test_updated_at_task(client: TestClient, users, tasks):
     assert data['updated_at'].startswith(time.isoformat()[0:17])
 
 
-def test_get_task_by_id(client: TestClient, users, tasks):
-    rsp = client.get(
-        '/tasks/4',
-        headers={'Authorization': f'bearer {users[1]["access_token"]}'},
+def test_get_task_by_id(auth_client_alice: TestClient, tasks):
+    rsp = auth_client_alice.get(
+        '/tasks/1',
     )
 
     assert rsp.status_code == HTTPStatus.OK
 
     data = rsp.json()
 
-    assert tasks[3]['title'] == data['title']
-    assert tasks[3]['id_task'] == data['id_task']
+    assert tasks[0]['title'] == data['title']
+    assert tasks[0]['id_task'] == data['id_task']
 
 
 @pytest.mark.asyncio
 async def test_update_task(
-    client: TestClient, users, tasks, session: AsyncSession
+    auth_client_alice: TestClient, tasks, session: AsyncSession
 ):
     id_test = 1
     new_data = {
@@ -155,10 +152,9 @@ async def test_update_task(
         'priority': 75,
     }
 
-    rsp = client.patch(
+    rsp = auth_client_alice.patch(
         f'/tasks/{id_test}',
         json=new_data,
-        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
     )
     assert rsp.status_code == HTTPStatus.OK
 
@@ -213,12 +209,9 @@ async def test_update_task(
 
 @pytest.mark.asyncio
 async def test_delete_task(
-    client: TestClient, session: AsyncSession, users, tasks
+    auth_client_alice: TestClient, session: AsyncSession, tasks
 ):
-    rsp = client.delete(
-        '/tasks/1',
-        headers={'Authorization': f'bearer {users[0]["access_token"]}'},
-    )
+    rsp = auth_client_alice.delete('/tasks/1')
 
     assert rsp.status_code == HTTPStatus.NO_CONTENT
 

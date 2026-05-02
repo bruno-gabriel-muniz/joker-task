@@ -12,14 +12,14 @@ from joker_task.db.models import Filter, View
 
 @pytest.mark.asyncio
 async def test_post_view_with_full_filter(
-    client: TestClient, users: list[dict], session: AsyncSession
+    auth_client_alice: TestClient, users: list[dict], session: AsyncSession
 ):
     reminder_spec = [
         datetime.now().isoformat(),
         (datetime.now() + timedelta(days=1)).isoformat(),
     ]
 
-    rsp = client.post(
+    rsp = auth_client_alice.post(
         '/views/',
         json={
             'name': 'Minha View',
@@ -36,7 +36,6 @@ async def test_post_view_with_full_filter(
                 },
             ],
         },
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.CREATED
@@ -82,14 +81,15 @@ async def test_post_view_with_full_filter(
     assert filter_db.priority == [10, 20]
 
 
-def test_post_view_without_filter(client: TestClient, users: list[dict]):
-    rsp = client.post(
+def test_post_view_without_filter(
+    auth_client_alice: TestClient, users: list[dict]
+):
+    rsp = auth_client_alice.post(
         '/views/',
         json={
             'name': 'Minha View Vazia',
             'filters': [{'title': 'None'}],
         },
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.CREATED
@@ -104,14 +104,15 @@ def test_post_view_without_filter(client: TestClient, users: list[dict]):
     assert data['filters'][0]['title'] == 'None'
 
 
-def test_post_view_with_filter_empty(client: TestClient, users: list[dict]):
-    rsp = client.post(
+def test_post_view_with_filter_empty(
+    auth_client_alice: TestClient, users: list[dict]
+):
+    rsp = auth_client_alice.post(
         '/views/',
         json={
             'name': 'Minha View Vazia',
             'filters': [{}],
         },
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.CREATED
@@ -125,15 +126,14 @@ def test_post_view_with_filter_empty(client: TestClient, users: list[dict]):
 
 
 def test_post_view_with_conflicting_name(
-    client: TestClient, users: list[dict], views: list[dict]
+    auth_client_bob: TestClient, views: list[dict]
 ):
-    rsp = client.post(
+    rsp = auth_client_bob.post(
         '/views/',
         json={
-            'name': views[0]['name'],
+            'name': views[2]['name'],
             'filters': [],
         },
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.CONFLICT
@@ -143,10 +143,11 @@ def test_post_view_with_conflicting_name(
     assert data['detail'] == 'view with this name already exists'
 
 
-def test_get_views(client: TestClient, users: list[dict], views: list[dict]):
-    rsp = client.get(
+def test_get_views(
+    auth_client_alice: TestClient, users: list[dict], views: list[dict]
+):
+    rsp = auth_client_alice.get(
         '/views/',
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -167,15 +168,10 @@ def test_get_views(client: TestClient, users: list[dict], views: list[dict]):
     assert data[1]['user_email'] == views_alice[1]['user_email']
 
 
-def test_get_view_by_id(
-    client: TestClient, users: list[dict], views: list[dict]
-):
+def test_get_view_by_id(auth_client_alice: TestClient, views: list[dict]):
     view = views[0]
 
-    rsp = client.get(
-        f'/views/{view["id_view"]}',
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
-    )
+    rsp = auth_client_alice.get(f'/views/{view["id_view"]}')
 
     assert rsp.status_code == HTTPStatus.OK
 
@@ -186,11 +182,8 @@ def test_get_view_by_id(
     assert data['name'] == view['name']
 
 
-def test_get_view_by_id_not_found(client: TestClient, users: list[dict]):
-    rsp = client.get(
-        '/views/999',
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
-    )
+def test_get_view_by_id_not_found(auth_client_bob: TestClient):
+    rsp = auth_client_bob.get('/views/999')
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND
 
@@ -200,14 +193,11 @@ def test_get_view_by_id_not_found(client: TestClient, users: list[dict]):
 
 
 def test_get_view_by_id_other_user(
-    client: TestClient, users: list[dict], views: list[dict]
+    auth_client_bob: TestClient, views: list[dict]
 ):
     view = views[0]
 
-    rsp = client.get(
-        f'/views/{view["id_view"]}',
-        headers={'Authorization': f'Bearer {users[1]["access_token"]}'},
-    )
+    rsp = auth_client_bob.get(f'/views/{view["id_view"]}')
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND
 
@@ -217,18 +207,14 @@ def test_get_view_by_id_other_user(
 
 
 def test_get_view_tasks(
-    client: TestClient,
-    users: list[dict],
+    auth_client_alice: TestClient,
     views: list[dict],
     filters: list[dict],
     tasks: list[dict],
 ):
     view = views[0]
 
-    rsp = client.get(
-        f'/views/{view["id_view"]}/tasks',
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
-    )
+    rsp = auth_client_alice.get(f'/views/{view["id_view"]}/tasks')
 
     assert rsp.status_code == HTTPStatus.OK
 
@@ -252,19 +238,17 @@ def test_get_view_tasks(
 
 @pytest.mark.asyncio
 async def test_update_view(
-    client: TestClient,
+    auth_client_alice: TestClient,
     session: AsyncSession,
-    users: list[dict],
     views: list[dict],
 ):
     view = views[0]
 
-    rsp = client.put(
+    rsp = auth_client_alice.put(
         f'/views/{view["id_view"]}',
         json={
             'name': 'Minha View Atualizada',
         },
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -283,13 +267,12 @@ async def test_update_view(
     assert view_db.name == 'Minha View Atualizada'
 
 
-def test_update_view_not_found(client: TestClient, users: list[dict]):
-    rsp = client.put(
+def test_update_view_not_found(auth_client_bob: TestClient):
+    rsp = auth_client_bob.put(
         '/views/999',
         json={
             'name': 'Minha View Atualizada',
         },
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND
@@ -300,16 +283,15 @@ def test_update_view_not_found(client: TestClient, users: list[dict]):
 
 
 def test_update_view_other_user(
-    client: TestClient, users: list[dict], views: list[dict]
+    auth_client_bob: TestClient, views: list[dict]
 ):
     view = views[0]
 
-    rsp = client.put(
+    rsp = auth_client_bob.put(
         f'/views/{view["id_view"]}',
         json={
             'name': 'Minha View Atualizada',
         },
-        headers={'Authorization': f'Bearer {users[1]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND
@@ -320,17 +302,16 @@ def test_update_view_other_user(
 
 
 def test_update_view_with_conflicting_name(
-    client: TestClient, users: list[dict], views: list[dict]
+    auth_client_bob: TestClient, views: list[dict]
 ):
-    view = views[0]
-    other_view = views[1]
+    view = views[2]
+    other_view = views[3]
 
-    rsp = client.put(
+    rsp = auth_client_bob.put(
         f'/views/{view["id_view"]}',
         json={
             'name': other_view['name'],
         },
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.CONFLICT
@@ -341,16 +322,15 @@ def test_update_view_with_conflicting_name(
 
 
 def test_update_view_with_invalid_name(
-    client: TestClient, users: list[dict], views: list[dict]
+    auth_client_bob: TestClient, views: list[dict]
 ):
-    view = views[0]
+    view = views[2]
 
-    rsp = client.put(
+    rsp = auth_client_bob.put(
         f'/views/{view["id_view"]}',
         json={
             'name': '',
         },
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.BAD_REQUEST
@@ -360,15 +340,14 @@ def test_update_view_with_invalid_name(
 
 @pytest.mark.asyncio
 async def test_create_view_filter(
-    client: TestClient,
+    auth_client_alice: TestClient,
     session: AsyncSession,
-    users: list[dict],
     views: list[dict],
     filters: list[dict],
 ):
     view = views[0]
 
-    rsp = client.post(
+    rsp = auth_client_alice.post(
         f'/views/{view["id_view"]}/filters',
         json={
             'title': 'Test%',
@@ -380,7 +359,6 @@ async def test_create_view_filter(
             'state': ['TODO'],
             'priority': [5, 15],
         },
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.CREATED
@@ -412,16 +390,15 @@ async def test_create_view_filter(
 
 @pytest.mark.asyncio
 async def test_update_view_filter(
-    client: TestClient,
+    auth_client_alice: TestClient,
     session: AsyncSession,
-    users: list[dict],
     views: list[dict],
     filters: list[dict],
 ):
     view = views[0]
     filter = filters[0]
 
-    rsp = client.patch(
+    rsp = auth_client_alice.patch(
         f'/views/{view["id_view"]}/filters/{filter["id_filter"]}',
         json={
             'title': 'Updated Title',
@@ -433,7 +410,6 @@ async def test_update_view_filter(
             'state': ['IN_PROGRESS'],
             'priority': [1, 10],
         },
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -470,11 +446,11 @@ async def test_update_view_filter(
 
 
 def test_update_view_filter_not_found(
-    client: TestClient, users: list[dict], views: list[dict]
+    auth_client_bob: TestClient, views: list[dict]
 ):
-    view = views[0]
+    view = views[2]
 
-    rsp = client.patch(
+    rsp = auth_client_bob.patch(
         f'/views/{view["id_view"]}/filters/999',
         json={
             'title': 'Updated Title',
@@ -486,7 +462,6 @@ def test_update_view_filter_not_found(
             'state': ['IN_PROGRESS'],
             'priority': [1, 10],
         },
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND
@@ -498,18 +473,16 @@ def test_update_view_filter_not_found(
 
 @pytest.mark.asyncio
 async def test_delete_view_filter(
-    client: TestClient,
+    auth_client_alice: TestClient,
     session: AsyncSession,
-    users: list[dict],
     views: list[dict],
     filters: list[dict],
 ):
     view = views[0]
     filter = filters[0]
 
-    rsp = client.delete(
+    rsp = auth_client_alice.delete(
         f'/views/{view["id_view"]}/filters/{filter["id_filter"]}',
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.NO_CONTENT
@@ -525,13 +498,12 @@ async def test_delete_view_filter(
 
 
 def test_delete_view_filter_not_found(
-    client: TestClient, users: list[dict], views: list[dict]
+    auth_client_bob: TestClient, views: list[dict]
 ):
-    view = views[0]
+    view = views[2]
 
-    rsp = client.delete(
+    rsp = auth_client_bob.delete(
         f'/views/{view["id_view"]}/filters/999',
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND
@@ -543,18 +515,14 @@ def test_delete_view_filter_not_found(
 
 @pytest.mark.asyncio
 async def test_delete_view(
-    client: TestClient,
+    auth_client_alice: TestClient,
     session: AsyncSession,
-    users: list[dict],
     views: list[dict],
     filters: list[dict],
 ):
     view = views[0]
 
-    rsp = client.delete(
-        f'/views/{view["id_view"]}',
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
-    )
+    rsp = auth_client_alice.delete(f'/views/{view["id_view"]}')
 
     assert rsp.status_code == HTTPStatus.NO_CONTENT
 
@@ -571,11 +539,8 @@ async def test_delete_view(
     assert filters_db is None
 
 
-def test_delete_view_not_found(client: TestClient, users: list[dict]):
-    rsp = client.delete(
-        '/views/999',
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
-    )
+def test_delete_view_not_found(auth_client_bob: TestClient):
+    rsp = auth_client_bob.delete('/views/999')
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND
 
@@ -585,14 +550,11 @@ def test_delete_view_not_found(client: TestClient, users: list[dict]):
 
 
 def test_delete_view_other_user(
-    client: TestClient, users: list[dict], views: list[dict]
+    auth_client_bob: TestClient, views: list[dict]
 ):
     view = views[0]
 
-    rsp = client.delete(
-        f'/views/{view["id_view"]}',
-        headers={'Authorization': f'Bearer {users[1]["access_token"]}'},
-    )
+    rsp = auth_client_bob.delete(f'/views/{view["id_view"]}')
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND
 

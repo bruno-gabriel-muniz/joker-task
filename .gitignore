@@ -231,3 +231,4 @@ angular-*.js
 .DS_Store
 Thumbs.db
 
+.codex

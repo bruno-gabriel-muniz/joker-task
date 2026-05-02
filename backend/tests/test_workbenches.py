@@ -13,15 +13,14 @@ from joker_task.db.models import Workbench
 
 @pytest.mark.asyncio
 async def test_create_workbench(
-    client: TestClient, session: AsyncSession, users
+    auth_client_alice: TestClient, session: AsyncSession, users
 ):
-    rsp = client.post(
+    rsp = auth_client_alice.post(
         '/workbenches/',
         json={
             'name': 'workbench3',
             'columns': ['To Do', 'In Progress', 'Done'],
         },
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.CREATED
@@ -41,11 +40,9 @@ async def test_create_workbench(
     assert workbench_db.name == data['name']
 
 
-def test_create_workbench_conflict(client: TestClient, users, workbenches):
-    rsp = client.post(
-        '/workbenches/',
-        json={'name': 'workbench3', 'columns': []},
-        headers={'Authorization': f'Bearer {users[1]["access_token"]}'},
+def test_create_workbench_conflict(auth_client_bob: TestClient, workbenches):
+    rsp = auth_client_bob.post(
+        '/workbenches/', json={'name': 'workbench3', 'columns': []}
     )
 
     assert rsp.status_code == HTTPStatus.CONFLICT
@@ -55,13 +52,11 @@ def test_create_workbench_conflict(client: TestClient, users, workbenches):
     assert data['detail'] == 'workbench name already in use'
 
 
-def test_created_at_workbench(client: TestClient, users):
+def test_created_at_workbench(auth_client_alice: TestClient):
     time = datetime.now(ZoneInfo('UTC'))
     with freeze_time(time):
-        rsp = client.post(
-            '/workbenches/',
-            json={'name': 'Time Workbench', 'columns': []},
-            headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+        rsp = auth_client_alice.post(
+            '/workbenches/', json={'name': 'Time Workbench', 'columns': []}
         )
 
     assert rsp.status_code == HTTPStatus.CREATED
@@ -74,28 +69,27 @@ def test_created_at_workbench(client: TestClient, users):
 
 
 def test_not_found_workbench_in_update_task(
-    client: TestClient, users, workbenches
+    auth_client_bob: TestClient, workbenches
 ):
-    rsp = client.post(
+    fake_workbench_id = len(workbenches) + 1
+    rsp = auth_client_bob.post(
         '/tasks/',
         json={
             'title': 'test workbench',
-            'workbenches': [3],
+            'workbenches': [fake_workbench_id],
         },
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND
 
     data = rsp.json()
 
-    assert data['detail'] == 'workbench with id: 3, not found'
+    assert data['detail'] == 'workbench with id: 4, not found'
 
 
-def test_list_workbenches(client: TestClient, users, workbenches):
-    rsp = client.get(
+def test_list_workbenches(auth_client_alice: TestClient, workbenches):
+    rsp = auth_client_alice.get(
         '/workbenches/',
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -108,10 +102,11 @@ def test_list_workbenches(client: TestClient, users, workbenches):
     assert data[2]['name'] == 'workbench2'
 
 
-def test_get_workbench_by_id(client: TestClient, users, tasks, workbenches):
-    rsp = client.get(
+def test_get_workbench_by_id(
+    auth_client_alice: TestClient, tasks, workbenches
+):
+    rsp = auth_client_alice.get(
         '/workbenches/1',
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -131,32 +126,26 @@ def test_get_workbench_by_id(client: TestClient, users, tasks, workbenches):
     assert tasks_rsp[3]['title'] == 'title'
 
 
-def test_get_workbench_by_id_not_found(client: TestClient, users):
-    rsp = client.get(
-        '/workbenches/999',
-        headers={'Authorization': f'Bearer {users[1]["access_token"]}'},
-    )
+def test_get_workbench_by_id_not_found(auth_client_bob: TestClient):
+    rsp = auth_client_bob.get('/workbenches/999')
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND
 
 
-def test_get_workbench_by_id_forbidden(client: TestClient, users, workbenches):
-    rsp = client.get(
-        '/workbenches/1',
-        headers={'Authorization': f'Bearer {users[1]["access_token"]}'},
-    )
+def test_get_workbench_by_id_forbidden(
+    auth_client_bob: TestClient, workbenches
+):
+    rsp = auth_client_bob.get('/workbenches/1')
 
     assert rsp.status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.asyncio
 async def test_update_workbench_name(
-    client: TestClient, session: AsyncSession, users, workbenches
+    auth_client_alice: TestClient, session: AsyncSession, workbenches
 ):
-    rsp = client.patch(
-        '/workbenches/1',
-        json={'name': 'Updated Workbench'},
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
+    rsp = auth_client_alice.patch(
+        '/workbenches/1', json={'name': 'Updated Workbench'}
     )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -176,15 +165,14 @@ async def test_update_workbench_name(
 
 @pytest.mark.asyncio
 async def test_update_workbench_columns(
-    client: TestClient, session: AsyncSession, users, workbenches
+    auth_client_alice: TestClient, session: AsyncSession, workbenches
 ):
-    rsp = client.patch(
+    rsp = auth_client_alice.patch(
         '/workbenches/2',
         json={
             'columns_add': ['Backlog', 'Completed'],
             'columns_remove': ['To Do', 'Done'],
         },
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -209,14 +197,13 @@ async def test_update_workbench_columns(
 
 @pytest.mark.asyncio
 async def test_updated_at_workbench(
-    client: TestClient, session: AsyncSession, users, workbenches
+    auth_client_alice: TestClient, session: AsyncSession, workbenches
 ):
     time = datetime.now(ZoneInfo('UTC'))
     with freeze_time(time):
-        rsp = client.patch(
+        rsp = auth_client_alice.patch(
             '/workbenches/1',
             json={'name': 'Time Updated Workbench'},
-            headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
         )
 
     assert rsp.status_code == HTTPStatus.OK
@@ -236,11 +223,10 @@ async def test_updated_at_workbench(
 
 @pytest.mark.asyncio
 async def test_delete_workbench(
-    client: TestClient, session: AsyncSession, users, workbenches
+    auth_client_alice: TestClient, session: AsyncSession, workbenches
 ):
-    rsp = client.delete(
+    rsp = auth_client_alice.delete(
         '/workbenches/1',
-        headers={'Authorization': f'Bearer {users[0]["access_token"]}'},
     )
 
     assert rsp.status_code == HTTPStatus.NO_CONTENT
