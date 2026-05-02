@@ -52,7 +52,7 @@ def generate_refresh_token(data: dict) -> str:
     settings = Settings()  # type: ignore
 
     to_encode = data.copy()
-    delta = timedelta(hours=settings.REFRESH_TOKEN_EXPIRE)
+    delta = timedelta(minutes=settings.REFRESH_TOKEN_EXPIRE)
     exp = delta + datetime.now(
         ZoneInfo('UTC'),
     )
