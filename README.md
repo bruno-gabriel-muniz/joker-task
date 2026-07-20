@@ -47,6 +47,7 @@ Atualmente, o projeto conta com:
 - views reutilizáveis
 - arquitetura modular com separação clara de responsabilidades
 - testes automatizados com cobertura
+- frontend em desenvolvimento
 
 O projeto está em evolução contínua, com foco em **qualidade de código**, **testabilidade** e **clareza arquitetural**.
 
@@ -332,7 +333,9 @@ flowchart TD
 - [X] Filtros mais avançados (views reutilizáveis)
 - [X] Evolução do domínio de Tags
 - [X] Dockerizar o backend
-- [ ] Iniciar desenvolvimento do frontend
+- [X] Iniciar desenvolvimento do frontend
+- [ ] Maduração do frontend
+- [ ] Conexão do frontend com o backend
 - [ ] Implementação do sistema de repetição de tarefas
 - [ ] Refatorações e melhorias arquiteturais contínuas
 
