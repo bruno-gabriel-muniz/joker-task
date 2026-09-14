@@ -17,9 +17,12 @@ jobs:
         with:
           node-version: 20
           cache: npm
+
+      - name: Copia os arquivos do repositório
+        uses: actions/checkout@v4
       
       - name: Instala dependências
-        run: npm install
+        run: npm ci
 
       - name: Roda o linter
         run: npm run linter
