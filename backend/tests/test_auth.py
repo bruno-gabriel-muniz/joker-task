@@ -1,8 +1,6 @@
-from datetime import datetime, timedelta
 from http import HTTPStatus
 
 from fastapi.testclient import TestClient
-from freezegun import freeze_time
 
 
 def test_create_user(client: TestClient):
@@ -66,27 +64,15 @@ def test_login_unauthorized(client: TestClient, users):
     assert rsp.json()['detail'] == 'invalid email or password'
 
 
-def test_refresh(auth_client_alice: TestClient):
-    token_before = auth_client_alice.cookies.get('access_token')
+def test_access_expired_refresh_valid(
+    auth_client_alice: TestClient, users, settings
+):
+    auth_client_alice.cookies.set('access_token', '')
 
-    with freeze_time(datetime.now() + timedelta(minutes=20)):
-        rsp = auth_client_alice.post(
-            '/refresh/',
-            cookies={
-                'refresh_token': auth_client_alice.cookies['refresh_token']
-            },
-        )
+    rsp = auth_client_alice.get('/me')
 
     assert rsp.status_code == HTTPStatus.OK
-    assert rsp.cookies.get('access_token') is not None
-    assert rsp.cookies.get('access_token') != token_before
-
-
-def test_refresh_invalid(client: TestClient):
-    rsp = client.post('/refresh/')
-
-    assert rsp.status_code == HTTPStatus.UNAUTHORIZED
-    assert rsp.json()['detail'] == 'missing refresh token'
+    assert rsp.json()['email'] == users[0]['email']
 
 
 def test_logout(auth_client_alice: TestClient):
@@ -95,6 +81,16 @@ def test_logout(auth_client_alice: TestClient):
     assert rsp.status_code == HTTPStatus.OK
     assert rsp.cookies.get('access_token') is None
     assert rsp.cookies.get('refresh_token') is None
+
+
+def test_get_me(auth_client_alice: TestClient):
+    rsp = auth_client_alice.get('/me/')
+
+    assert rsp.status_code == HTTPStatus.OK
+
+    data = rsp.json()
+
+    assert data['email'] == 'alice@example.com'
 
 
 def test_update_user(auth_client_alice: TestClient):

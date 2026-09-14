@@ -28,7 +28,7 @@ def test_access_token_without_user(client: TestClient, settings):
     )
 
     assert rsp.status_code == HTTPStatus.UNAUTHORIZED
-    assert rsp.json()['detail'] == 'invalid access token'
+    assert rsp.json()['detail'] == 'invalid token'
 
 
 def test_access_token_fake_user(client: TestClient, settings):
@@ -48,7 +48,7 @@ def test_access_token_fake_user(client: TestClient, settings):
     )
 
     assert rsp.status_code == HTTPStatus.UNAUTHORIZED
-    assert rsp.json()['detail'] == 'invalid access token'
+    assert rsp.json()['detail'] == 'invalid token'
 
 
 def test_access_token_invalid_token(client: TestClient):
@@ -60,7 +60,7 @@ def test_access_token_invalid_token(client: TestClient):
         )
 
     assert rsp.status_code == HTTPStatus.UNAUTHORIZED
-    assert rsp.json()['detail'] == 'invalid access token'
+    assert rsp.json()['detail'] == 'invalid token'
 
 
 def test_access_token_with_wrong_type(client: TestClient, settings):
@@ -81,67 +81,27 @@ def test_access_token_with_wrong_type(client: TestClient, settings):
     )
 
     assert rsp.status_code == HTTPStatus.UNAUTHORIZED
-    assert rsp.json()['detail'] == 'invalid access token'
+    assert rsp.json()['detail'] == 'invalid token'
 
 
-def test_refresh_token_without_user(client: TestClient, settings):
-    token = encode(
-        {'exp': datetime.now() + timedelta(days=1), 'type': 'refresh'},
-        settings.SECRET_KEY,
-        settings.ALGORITHM,
-    )
-
-    rsp = client.post('/refresh/', cookies={'refresh_token': token})
-
-    assert rsp.status_code == HTTPStatus.UNAUTHORIZED
-    assert rsp.json()['detail'] == 'invalid refresh token'
-
-
-def test_refresh_token_fake_user(client: TestClient, settings):
-    token = encode(
-        {
-            'exp': datetime.now() + timedelta(days=1),
-            'sub': 'fake_user',
-            'type': 'refresh',
-        },
-        settings.SECRET_KEY,
-        settings.ALGORITHM,
-    )
-
-    rsp = client.post(
-        '/refresh/',
-        cookies={'refresh_token': token},
-    )
-
-    assert rsp.status_code == HTTPStatus.UNAUTHORIZED
-    assert rsp.json()['detail'] == 'invalid refresh token'
-
-
-def test_refrsh_token_invalid_token(client: TestClient):
-    rsp = client.post('/refresh/', cookies={'refresh_token': 'fake_token'})
-
-    assert rsp.status_code == HTTPStatus.UNAUTHORIZED
-    assert rsp.json()['detail'] == 'invalid refresh token'
-
-
-def test_refresh_token_with_wrong_type(client: TestClient, settings):
+def test_token_with_wrong_type(auth_client_bob: TestClient, settings):
+    client = auth_client_bob
     token = encode(
         payload={
             'exp': datetime.now() + timedelta(days=1),
             'sub': 'bob',
-            'type': 'access',
+            'type': 'wrong',
         },
         key=settings.SECRET_KEY,
         algorithm=settings.ALGORITHM,
     )
+    client.cookies.set('access_token', '')
+    client.cookies.set('refresh_token', token)
 
-    rsp = client.post(
-        '/refresh/',
-        cookies={'refresh_token': token},
-    )
+    rsp = client.get('/me/')
 
     assert rsp.status_code == HTTPStatus.UNAUTHORIZED
-    assert rsp.json()['detail'] == 'invalid refresh token'
+    assert rsp.json()['detail'] == 'invalid token'
 
 
 def test_refresh_token_expired(client: TestClient, users):
@@ -164,4 +124,4 @@ def test_refresh_token_expired(client: TestClient, users):
 
     data = rsp.json()
 
-    assert data['detail'] == 'not authenticated'
+    assert data['detail'] == 'invalid token'

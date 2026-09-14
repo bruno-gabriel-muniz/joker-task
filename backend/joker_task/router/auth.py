@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, HTTPException, Response
 from sqlalchemy import select
 
 from joker_task.db.models import User
@@ -16,7 +16,6 @@ from joker_task.service.security import (
     generate_refresh_token,
     get_hash_password,
     verify_password,
-    verify_refresh,
 )
 from joker_task.settings import Settings
 
@@ -71,7 +70,7 @@ async def login(
 
     settings = Settings()  # type: ignore
 
-    # 🍪 ACCESS TOKEN (curto)
+    # ACCESS TOKEN (curto)
     response.set_cookie(
         key='access_token',
         value=access_token,
@@ -93,36 +92,6 @@ async def login(
     )
 
 
-@auth_router.post('/refresh/', response_model=None, status_code=HTTPStatus.OK)
-@auth_router.post(
-    '/refresh',
-    response_model=None,
-    status_code=HTTPStatus.OK,
-    include_in_schema=False,
-)
-async def refresh_token(
-    request: Request, response: Response, session: T_Session
-):
-    refresh_token = request.cookies.get('refresh_token')
-
-    if not refresh_token:
-        raise HTTPException(HTTPStatus.UNAUTHORIZED, 'missing refresh token')
-
-    new_access_token = await verify_refresh(refresh_token, session)
-
-    settings = Settings()  # type: ignore
-
-    response.set_cookie(
-        key='access_token',
-        value=new_access_token,
-        httponly=True,
-        secure=settings.PROD,
-        samesite='lax',
-        max_age=60 * 15,
-        path='/',
-    )
-
-
 @auth_router.post('/logout/', response_model=None, status_code=HTTPStatus.OK)
 @auth_router.post(
     '/logout',
@@ -133,6 +102,11 @@ async def refresh_token(
 async def logout(response: Response):
     response.delete_cookie('access_token', path='/')
     response.delete_cookie('refresh_token', path='/')
+
+
+@auth_router.get('/me/', response_model=UserPublic, status_code=HTTPStatus.OK)
+async def get_me(current_user: T_User, mapper: T_Mapper):
+    return mapper.map_user_public(current_user)
 
 
 @auth_router.put(

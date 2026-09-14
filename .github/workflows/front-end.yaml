@@ -1,0 +1,28 @@
+name: Front-End
+on:
+  push:
+    tags:
+      - "v*f"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Instala o Angular
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      
+      - name: Instala dependências
+        run: npm install
+
+      - name: Roda o linter
+        run: npm run linter
+      
+      - name: Roda os testes
+        run: npm run test

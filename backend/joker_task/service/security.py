@@ -1,10 +1,9 @@
 from datetime import datetime, timedelta
 from http import HTTPStatus
-from typing import Annotated
+from typing import Annotated, Literal
 from zoneinfo import ZoneInfo
 
-from fastapi import Depends, HTTPException, Request
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, Request, Response
 from jwt import InvalidTokenError, decode, encode
 from loguru import logger
 from pwdlib import PasswordHash
@@ -18,10 +17,7 @@ from joker_task.settings import Settings
 pwd_context = PasswordHash.recommended()
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
-
 T_Session = Annotated[AsyncSession, Depends(get_session)]
-T_OAuth2PB = Annotated[str, Depends(oauth2_scheme)]
 
 
 def get_hash_password(password: str) -> str:
@@ -62,7 +58,9 @@ def generate_refresh_token(data: dict) -> str:
     return encode(to_encode, settings.SECRET_KEY, settings.ALGORITHM)
 
 
-async def verify_refresh(token: str, session: T_Session) -> str:
+def verify_token(
+    token: str, expected_type: Literal['access', 'refresh']
+) -> dict:
     settings = Settings()  # type: ignore
 
     try:
@@ -70,79 +68,54 @@ async def verify_refresh(token: str, session: T_Session) -> str:
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
     except InvalidTokenError:
-        logger.info('refresh token verification failed: invalid token')
-        raise HTTPException(
-            HTTPStatus.UNAUTHORIZED, detail='invalid refresh token'
-        )
+        logger.info('token verification failed: invalid token')
+        raise HTTPException(HTTPStatus.UNAUTHORIZED, detail='invalid token')
     except Exception:  # pragma: no cover
         logger.warning(
-            'refresh token verification failed: unexpected error'
+            'token verification failed: unexpected error'
         )  # pragma: no cover
         raise HTTPException(
-            HTTPStatus.UNAUTHORIZED, 'invalid refresh token'
+            HTTPStatus.UNAUTHORIZED, 'invalid token'
         )  # pragma: no cover
 
     if payload.get('sub') is None:
-        logger.info('refresh token verification failed: no subject email')
-        raise HTTPException(
-            HTTPStatus.UNAUTHORIZED, detail='invalid refresh token'
-        )
+        logger.info('token verification failed: no subject email')
+        raise HTTPException(HTTPStatus.UNAUTHORIZED, detail='invalid token')
 
-    if payload.get('type') != 'refresh':
-        logger.info('refresh token verification failed: wrong token type')
-        raise HTTPException(
-            HTTPStatus.UNAUTHORIZED, detail='invalid refresh token'
-        )
+    if payload.get('type') != expected_type:
+        logger.info('token verification failed: wrong token type')
+        raise HTTPException(HTTPStatus.UNAUTHORIZED, detail='invalid token')
 
-    user = await session.scalar(
-        select(User).where(User.email == payload['sub'])
-    )
-
-    if not user:
-        logger.info('refresh token verification failed: user not found')
-        raise HTTPException(
-            HTTPStatus.UNAUTHORIZED, detail='invalid refresh token'
-        )
-
-    return generate_access_token({'sub': payload['sub']})
+    return payload
 
 
-async def get_user(request: Request, session: T_Session) -> User:
-    token = request.cookies.get('access_token')
-
-    if not token:
-        raise HTTPException(HTTPStatus.UNAUTHORIZED, 'not authenticated')
-
+async def get_user(
+    request: Request, response: Response, session: T_Session
+) -> User:
     settings = Settings()  # type: ignore
+    token = request.cookies.get('access_token') or ''
 
     try:
-        payload = decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        payload: dict[str, str] = verify_token(token, 'access')
+    except HTTPException:
+        token = request.cookies.get('refresh_token') or ''
+        payload = verify_token(token, 'refresh')
+
+        response.set_cookie(
+            key='access_token',
+            value=generate_access_token({'sub': payload['sub']}),
+            httponly=True,
+            secure=settings.PROD,  # True em produção (HTTPS)
+            samesite='strict',
+            max_age=60 * 15,  # 15 minutos
+            path='/',
         )
-    except InvalidTokenError:
-        logger.info('access token verification failed: invalid token')
-        raise HTTPException(HTTPStatus.UNAUTHORIZED, 'invalid access token')
-    except Exception:  # pragma: no cover
-        logger.warning(
-            'access token verification failed: unexpected error'
-        )  # pragma: no cover
-        raise HTTPException(
-            HTTPStatus.UNAUTHORIZED, 'invalid access token'
-        )  # pragma: no cover
-
-    if payload.get('sub') is None:
-        logger.info('access token verification failed: no subject email')
-        raise HTTPException(HTTPStatus.UNAUTHORIZED, 'invalid access token')
-
-    if payload.get('type') != 'access':
-        logger.info('access token verification failed: wrong token type')
-        raise HTTPException(HTTPStatus.UNAUTHORIZED, 'invalid access token')
 
     user = await session.scalar(
         select(User).where(User.email == payload.get('sub'))
     )
 
     if not user:
-        raise HTTPException(HTTPStatus.UNAUTHORIZED, 'invalid access token')
+        raise HTTPException(HTTPStatus.UNAUTHORIZED, 'invalid token')
 
     return user
