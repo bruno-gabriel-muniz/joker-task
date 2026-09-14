@@ -12,14 +12,14 @@ jobs:
         working-directory: frontend
 
     steps:
+      - name: Copia os arquivos do repositório
+        uses: actions/checkout@v4
+
       - name: Instala o Angular
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-
-      - name: Copia os arquivos do repositório
-        uses: actions/checkout@v4
       
       - name: Instala dependências
         run: npm ci
