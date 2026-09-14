@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TestBed } from '@angular/core/testing'
 
 import { ApiService } from './api.service'
@@ -20,8 +19,8 @@ describe('ApiService', () => {
     routerSpy = jasmine.createSpyObj<Router>('Router', ['navigate'])
     httpStrategyMock = new HttpStrategyMock()
 
-    TestBed.configureTestingModule(
-      {providers: [
+    TestBed.configureTestingModule({
+      providers: [
         ApiService,
         {
           provide: Router,
@@ -31,8 +30,8 @@ describe('ApiService', () => {
           provide: HttpStrategyMock,
           useValue: httpStrategyMock,
         },
-      ]}
-    )
+      ],
+    })
     service = TestBed.inject(ApiService)
   })
 

@@ -1,5 +1,4 @@
 import { Component } from '@angular/core'
-import { RouterOutlet } from '@angular/router'
 import { MainPanelComponent } from './layout/main-panel/main-panel.component'
 
 @Component({
