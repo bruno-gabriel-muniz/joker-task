@@ -1,7 +1,8 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Top Language](https://img.shields.io/github/languages/top/bruno-gabriel-muniz/joker-task)
-![Build](https://github.com/bruno-gabriel-muniz/joker-task/actions/workflows/ci.yaml/badge.svg)
+![Build](https://github.com/bruno-gabriel-muniz/joker-task/actions/workflows/back-end.yaml/badge.svg)
 [![codecov](https://codecov.io/gh/bruno-gabriel-muniz/joker-task/branch/main/graph/badge.svg)](https://codecov.io/gh/bruno-gabriel-muniz/joker-task)
+![Build](https://github.com/bruno-gabriel-muniz/joker-task/actions/workflows/front-end.yaml/badge.svg)
 
 <img src="https://i.ibb.co/wZb6qrnZ/Joker-Task-Editado.png" alt="Joker-Task-Editado" border="0">
 
@@ -77,9 +78,11 @@ O projeto está em evolução contínua, com foco em **qualidade de código**, *
 
 ## Como Começar?
 
-**Requisitos**: Python 3.13 e Poetry.
+### Backend
 
-> O projeto foi pensado para ser usado via API (Swagger disponível em /docs).
+**Requisitos**: Python 3.14 e Poetry.
+
+> O projeto foi pensado para ser usado via API (Swagger disponível em /docs) quando só o backend estiver pronto.
 
 
 #### Como baixar o projeto?
@@ -93,6 +96,12 @@ cd joker-task/backend
 poetry install
 ```
 
+#### Como configurar as variáveis de ambiente?
+```
+cp .env.example .env
+```
+
+
 #### Como rodar o projeto?
 ```
 poetry run alembic upgrade head
@@ -101,7 +110,7 @@ poetry run task run
 
 #### Como rodar os testes?
 ```
-poetry run task testf
+poetry run task test
 ```
 
 #### Como usar os linters?
@@ -280,13 +289,12 @@ flowchart TD
     end
 
     Models --> DB
-    Services --> Mapper
 
     subgraph Mapper Mapper
         PublicSchemas[Public Schemas DTOs]
     end
 
-    Mapper --> Router
+    Router --> Mapper
 ```
 ---
 
