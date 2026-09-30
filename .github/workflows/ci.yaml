@@ -1,8 +1,8 @@
-name: Back-End
+name: CI
 on:
   push:
     tags:
-      - 'v*b'
+      - 'v*'
 
 
 jobs:

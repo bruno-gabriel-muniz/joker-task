@@ -1,14 +1,13 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Top Language](https://img.shields.io/github/languages/top/bruno-gabriel-muniz/joker-task)
-![Build](https://github.com/bruno-gabriel-muniz/joker-task/actions/workflows/back-end.yaml/badge.svg)
+![Build](https://github.com/bruno-gabriel-muniz/joker-task/actions/workflows/ci.yaml/badge.svg)
 [![codecov](https://codecov.io/gh/bruno-gabriel-muniz/joker-task/branch/main/graph/badge.svg)](https://codecov.io/gh/bruno-gabriel-muniz/joker-task)
-![Build](https://github.com/bruno-gabriel-muniz/joker-task/actions/workflows/front-end.yaml/badge.svg)
 
 <img src="https://i.ibb.co/wZb6qrnZ/Joker-Task-Editado.png" alt="Joker-Task-Editado" border="0">
 
 ## Sobre o projeto
 
-O **joker-task** é uma aplicação web de gerenciamento de tarefas em desenvolvimento que busca ser apenas o *espaço em branco* entre você e a conclusão das suas tarefas.
+O **joker-task** é uma api de gerenciamento de tarefas em desenvolvimento que busca ser apenas o *espaço em branco* entre você e a conclusão das suas tarefas.
 
 A ideia central é oferecer um sistema de organização **flexível**, **simples de manter** e **agnóstico a metodologias** específicas de produtividade.
 
@@ -48,7 +47,6 @@ Atualmente, o projeto conta com:
 - views reutilizáveis
 - arquitetura modular com separação clara de responsabilidades
 - testes automatizados com cobertura
-- frontend em desenvolvimento
 
 O projeto está em evolução contínua, com foco em **qualidade de código**, **testabilidade** e **clareza arquitetural**.
 
@@ -80,9 +78,9 @@ O projeto está em evolução contínua, com foco em **qualidade de código**, *
 
 ### Backend
 
-**Requisitos**: Python 3.14 e Poetry.
+**Requisitos**: Python 3.14t-dev e Poetry.
 
-> O projeto foi pensado para ser usado via API (Swagger disponível em /docs) quando só o backend estiver pronto.
+> O projeto é disponibilizado como uma API, com documentação interativa disponível em /docs.
 
 
 #### Como baixar o projeto?
@@ -92,14 +90,14 @@ git clone https://github.com/bruno-gabriel-muniz/joker-task
 
 #### Como instalar as dependências?
 ```
-cd joker-task/backend
 poetry install
 ```
 
 #### Como configurar as variáveis de ambiente?
 ```
-cp .env.example .env
+cp joker_task/.env.example joker_task/.env
 ```
+Crie a sua própria chave secreta para o JWT.
 
 
 #### Como rodar o projeto?
@@ -129,39 +127,37 @@ docker compose up --build
 
 ```
 .
-├── backend
-│   ├── joker_task
-│   │   ├── db
-│   │   │   ├── database.py
-│   │   │   └── models.py
-│   │   ├── interfaces
-│   │   │   └── interfaces.py
-│   │   ├── router
-│   │   │   ├── auth.py
-│   │   │   ├── tags.py
-│   │   │   ├── tasks.py
-│   │   │   ├── views.py
-│   │   │   └── workbenches.py
-│   │   ├── service
-│   │   │   ├── dependencies.py
-│   │   │   ├── make_filters.py
-│   │   │   ├── mapper.py
-│   │   │   ├── security.py
-│   │   │   ├── tags_service.py
-│   │   │   ├── task_collector.py
-│   │   │   ├── view_service.py
-│   │   │   └── workbench_service.py
-│   │   ├── __init__.py
-│   │   ├── app.py
-│   │   ├── schemas.py
-│   │   └── settings.py
-│   ├── migrations
-│   │   └── ...
-│   ├── tests
-│   │   └── ...
-│   ├── poetry.lock
-│   ├── pyproject.toml
-│   └── README.md
+├── joker_task
+│   ├── db
+│   │   ├── database.py
+│   │   └── models.py
+│   ├── interfaces
+│   │   └── interfaces.py
+│   ├── router
+│   │   ├── auth.py
+│   │   ├── tags.py
+│   │   ├── tasks.py
+│   │   ├── views.py
+│   │   └── workbenches.py
+│   ├── service
+│   │   ├── dependencies.py
+│   │   ├── make_filters.py
+│   │   ├── mapper.py
+│   │   ├── security.py
+│   │   ├── tags_service.py
+│   │   ├── task_collector.py
+│   │   ├── view_service.py
+│   │   └── workbench_service.py
+│   ├── __init__.py
+│   ├── app.py
+│   ├── schemas.py
+│   └── settings.py
+├── migrations
+│   └── ...
+├── tests
+│   └── ...
+├── poetry.lock
+├── pyproject.toml
 ├── docker-compose.yml
 ├── LICENSE
 └── README.md
@@ -341,9 +337,8 @@ flowchart TD
 - [X] Filtros mais avançados (views reutilizáveis)
 - [X] Evolução do domínio de Tags
 - [X] Dockerizar o backend
-- [X] Iniciar desenvolvimento do frontend
-- [ ] Maduração do frontend
-- [ ] Conexão do frontend com o backend
+- [ ] Separar testes unitários e de integração
+- [ ] Melhorar documentação de decisões arquiteturais
 - [ ] Implementação do sistema de repetição de tarefas
 - [ ] Refatorações e melhorias arquiteturais contínuas
 
