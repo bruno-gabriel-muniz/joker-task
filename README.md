@@ -91,6 +91,7 @@ git clone https://github.com/bruno-gabriel-muniz/joker-task
 #### Como instalar as dependências?
 ```
 poetry install
+poetry self add 'poethepoet[poetry_plugin]'
 ```
 
 #### Como configurar as variáveis de ambiente?
@@ -103,23 +104,24 @@ Crie a sua própria chave secreta para o JWT.
 #### Como rodar o projeto?
 ```
 poetry run alembic upgrade head
-poetry run task run
+poetry app
 ```
 
 #### Como rodar os testes?
 ```
-poetry run task test
+poetry test
 ```
 
 #### Como usar os linters?
 
 ```
-poetry run task format
+poetry format
 ```
 
 #### Rodando com Docker
 ```
-docker compose up --build
+docker compose up --build -d
+poetry run alembic upgrade head
 ```
 ---
 

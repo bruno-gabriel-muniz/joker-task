@@ -14,7 +14,6 @@ dependencies = [
     "sqlalchemy[asyncio] (>=2.0.43,<3.0.0)",
     "alembic (>=1.16.5,<2.0.0)",
     "pydantic-settings (>=2.11.0,<3.0.0)",
-    "aiosqlite (>=0.21.0,<0.22.0)",
     "loguru (>=0.7.3,<0.8.0)",
     "python-multipart (>=0.0.20,<0.0.21)"
 ]
@@ -22,7 +21,6 @@ dependencies = [
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.2"
 pytest-cov = "^7.0.0"
-taskipy = "^1.14.1"
 ruff = "^0.13.2"
 pytest-asyncio = "^1.2.0"
 ipdb = "^0.13.13"
@@ -30,6 +28,11 @@ freezegun = "^1.5.5"
 testcontainers = "^4.14.1"
 asyncpg = {extras = ["gssauth"], version = "^0.31.0"}
 psycopg = "^3.2.10"
+poethepoet = "^0.48.0"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
 line-length = 79
@@ -51,15 +54,13 @@ asyncio_default_fixture_loop_scope = 'function'
 [tool.coverage.run]
 concurrency = ["thread", "greenlet"]
 
-[tool.taskipy.tasks]
+[tool.poe.tasks]
 lint = 'ruff check'
-format = 'ruff format'
-post_format = 'ruff check --fix'
-run = 'fastapi dev joker_task/app.py'
-pre_test = 'task format'
-test = 'pytest -s -x --cov=joker_task -vv'
-post_test = 'coverage html'
+format = { shell = 'ruff format && ruff check --fix' }
+app = 'fastapi dev joker_task/app.py'
+test = { sequence = ['format', 'test-suite', 'coverage-report'] }
+test-suite = 'pytest -s -x --cov=joker_task -vv'
+coverage-report = 'coverage html'
 
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+[tool.poe] 
+poetry_command = ""
