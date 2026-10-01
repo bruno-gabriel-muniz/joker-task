@@ -39,7 +39,7 @@ jobs:
         run: poetry install
 
       - name: Verifica formatação
-        run: poetry run task lint
+        run: poetry run ruff check
 
       - name: Executa testes
         run: poetry run pytest --cov --cov-branch --cov-report=xml
