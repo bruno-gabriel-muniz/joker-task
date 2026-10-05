@@ -339,8 +339,7 @@ flowchart TD
 - [X] Filtros mais avançados (views reutilizáveis)
 - [X] Evolução do domínio de Tags
 - [X] Dockerizar o backend
-- [ ] Separar testes unitários e de integração
-- [ ] Melhorar documentação de decisões arquiteturais
 - [ ] Implementação do sistema de repetição de tarefas
+- [ ] Melhorar documentação de decisões arquiteturais
 - [ ] Refatorações e melhorias arquiteturais contínuas
 

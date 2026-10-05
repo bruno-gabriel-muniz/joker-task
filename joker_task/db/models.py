@@ -115,6 +115,31 @@ class Task:
 
 
 @table_registry.mapped_as_dataclass
+class TaskOccurrence:
+    __tablename__ = 'task_occurrences'
+    __table_args__ = (UniqueConstraint('id_task', 'occurrence_date'),)
+
+    id_task_occurrence: Mapped[int] = mapped_column(
+        Integer, primary_key=True, init=False, autoincrement=True
+    )
+
+    id_task: Mapped[int] = mapped_column(ForeignKey('tasks.id_task'))
+    task: Mapped['Task'] = relationship()
+    occurrence_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    done: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        init=False,
+        server_default=func.now(),
+        server_onupdate=func.now(),
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, init=False, server_default=func.now()
+    )
+
+
+@table_registry.mapped_as_dataclass
 class Tag:
     __tablename__ = 'tags'
     __table_args__ = (UniqueConstraint('user_email', 'name'),)
