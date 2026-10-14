@@ -5,6 +5,7 @@ from fastapi import Depends, HTTPException
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from joker_task.db.database import get_session
 from joker_task.db.models import Task, User, Workbench
@@ -20,15 +21,16 @@ class WorkbenchService(WorkbenchServiceInterface):
     async def collect_workbench_by_id(
         self, user: User, id_workbench: int
     ) -> Workbench:
-        logger.info(
-            'collecting workbenches with id: '
-            + f'{id_workbench} for user: {user.email}'
-        )
+        logger.info('collecting workbenches with id: ' + f'{id_workbench}')
 
         workbench_db = await self.session.scalar(
-            select(Workbench).where(
+            select(Workbench)
+            .where(
                 Workbench.user_email == user.email,
                 Workbench.id_workbench == id_workbench,
+            )
+            .options(
+                selectinload(Workbench.tasks).selectinload(Task.occurrences)
             )
         )
 
@@ -40,10 +42,7 @@ class WorkbenchService(WorkbenchServiceInterface):
     async def collect_workbenches_by_id(
         self, user: User, id_workbenches: Sequence[int]
     ) -> Sequence[Workbench]:
-        logger.info(
-            'collecting workbenches by id: '
-            + f'{id_workbenches} for user: {user.email}'
-        )
+        logger.info('collecting workbenches by id: ' + f'{id_workbenches}')
 
         result = await self.session.execute(
             select(Workbench).where(
@@ -76,7 +75,7 @@ class WorkbenchService(WorkbenchServiceInterface):
         return workbenches_db
 
     async def collect_workbenches(self, user: User) -> Sequence[Workbench]:
-        logger.info(f'collecting workbenches of user: {user.email}')
+        logger.info('collecting workbenches')
 
         result = await self.session.execute(
             select(Workbench).where(
@@ -87,9 +86,7 @@ class WorkbenchService(WorkbenchServiceInterface):
         return result.scalars().all()
 
     async def check_workbench_name_exists(self, user: User, name: str) -> None:
-        logger.info(
-            f'checking workbench name conflict: {name} for user: {user.email}'
-        )
+        logger.info('checking workbench name conflict')
         have_conflict = await self.session.scalar(
             select(Workbench).where(
                 Workbench.name == name,
@@ -108,10 +105,7 @@ class WorkbenchService(WorkbenchServiceInterface):
         workbenches_add: Sequence[int] | None,
         workbenches_remove: Sequence[int] | None,
     ) -> None:
-        logger.info(
-            'updating workbenches of task id: '
-            + f'{task.id_task} for user: {user.email}'
-        )
+        logger.info('updating workbenches of task id: ' + f'{task.id_task}')
         current_workbenches = {
             workbench.id_workbench for workbench in task.workbenches
         }

@@ -3,7 +3,15 @@ from typing import Sequence
 
 from loguru import logger
 
-from joker_task.db.models import Filter, Tag, Task, User, View, Workbench
+from joker_task.db.models import (
+    Filter,
+    Tag,
+    Task,
+    TaskOccurrence,
+    User,
+    View,
+    Workbench,
+)
 from joker_task.interfaces.interfaces import MapperInterface
 from joker_task.schemas import (
     FilterPublic,
@@ -23,7 +31,7 @@ class Mapper(MapperInterface):
 
     @staticmethod
     def map_user_public(user_db: User) -> UserPublic:
-        logger.debug(f'mapping user {user_db.email} to UserPublic')
+        logger.debug('mapping user to UserPublic')
 
         return UserPublic(
             email=user_db.email,
@@ -31,8 +39,12 @@ class Mapper(MapperInterface):
         )
 
     @staticmethod
-    def map_task_public(task_db: Task) -> TaskPublic:
+    def map_task_public(
+        task_db: Task, occurrences: Sequence[TaskOccurrence] | None = None
+    ) -> TaskPublic:
         logger.debug(f'mapping task {task_db.id_task} to TaskPublic')
+        if occurrences is None:
+            occurrences = []
 
         return TaskPublic(
             title=task_db.title,
@@ -44,6 +56,10 @@ class Mapper(MapperInterface):
             ],
             reminder=task_db.reminder,
             repetition=task_db.repetition,
+            occurrences={
+                occurrence.occurrence_date: occurrence.done
+                for occurrence in occurrences
+            },
             state=task_db.state,
             priority=task_db.priority,
             id_task=task_db.id_task,
@@ -107,8 +123,12 @@ class Mapper(MapperInterface):
 
     @staticmethod
     def map_view_result(result: dict[int, list[Task]]) -> ViewResult:
+        logger.debug(f'mapping results for {len(result)} view filters')
         result_mapped = {
-            id: [Mapper.map_task_public(task) for task in tasks]
+            id: [
+                Mapper.map_task_public(task, task.occurrences)
+                for task in tasks
+            ]
             for id, tasks in result.items()
         }
 
@@ -116,6 +136,7 @@ class Mapper(MapperInterface):
 
     @staticmethod
     def map_filter_public(filter_db: Filter) -> FilterPublic:
+        logger.debug(f'mapping filter {filter_db.id_filter} to FilterPublic')
         return FilterPublic(
             id_filter=filter_db.id_filter,
             created_at=filter_db.created_at,

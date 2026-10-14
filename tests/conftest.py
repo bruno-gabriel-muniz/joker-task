@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from typing import Any
 
 import pytest
@@ -13,6 +14,7 @@ from joker_task.db.models import (
     Filter,
     Tag,
     Task,
+    TaskOccurrence,
     User,
     View,
     Workbench,
@@ -435,8 +437,77 @@ async def tasks(
     session.add(task2)
     session.add(task3)
     session.add(task4)
+
     await session.commit()
     return list_task
+
+
+@pytest_asyncio.fixture
+async def occurrences(session: AsyncSession, tasks) -> list[dict[str, Any]]:
+    id_task1 = tasks[0]['id_task']
+    id_task4 = tasks[3]['id_task']
+    task1 = await session.scalar(select(Task).where(Task.id_task == id_task1))
+    task4 = await session.scalar(select(Task).where(Task.id_task == id_task4))
+
+    occurrences = [
+        {
+            'id_task': id_task1,
+            'task': task1,
+            'occurrence_date': (date.today() + timedelta(days=-1)),
+            'done': True,
+        },
+        {
+            'id_task': id_task1,
+            'task': task1,
+            'occurrence_date': (date.today() + timedelta(days=1)),
+            'done': False,
+        },
+        {
+            'id_task': id_task1,
+            'task': task1,
+            'occurrence_date': (date.today() + timedelta(days=2)),
+            'done': False,
+        },
+        {
+            'id_task': id_task4,
+            'task': task4,
+            'occurrence_date': (date.today() + timedelta(days=10)),
+            'done': True,
+        },
+    ]
+
+    occurrence1 = TaskOccurrence(
+        id_task=occurrences[0]['id_task'],
+        task=occurrences[0]['task'],
+        occurrence_date=occurrences[0]['occurrence_date'],
+        done=occurrences[0]['done'],
+    )
+    occurrence2 = TaskOccurrence(
+        id_task=occurrences[1]['id_task'],
+        task=occurrences[1]['task'],
+        occurrence_date=occurrences[1]['occurrence_date'],
+        done=occurrences[1]['done'],
+    )
+    occurrence3 = TaskOccurrence(
+        id_task=occurrences[2]['id_task'],
+        task=occurrences[2]['task'],
+        occurrence_date=occurrences[2]['occurrence_date'],
+        done=occurrences[2]['done'],
+    )
+    occurrence4 = TaskOccurrence(
+        id_task=occurrences[3]['id_task'],
+        task=occurrences[3]['task'],
+        occurrence_date=occurrences[3]['occurrence_date'],
+        done=occurrences[3]['done'],
+    )
+
+    session.add(occurrence1)
+    session.add(occurrence2)
+    session.add(occurrence3)
+    session.add(occurrence4)
+    await session.commit()
+
+    return occurrences
 
 
 @pytest.fixture

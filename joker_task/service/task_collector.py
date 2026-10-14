@@ -1,9 +1,11 @@
 from http import HTTPStatus
+from typing import Annotated
 
 from fastapi import Depends, HTTPException
 from loguru import logger
 from sqlalchemy import Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from joker_task.db.database import get_session
 from joker_task.db.models import Task, User
@@ -11,16 +13,16 @@ from joker_task.interfaces.interfaces import TaskCollectorInterface
 from joker_task.schemas import FilterSchema
 from joker_task.service.make_filters import factory_make_filter
 
+T_Session = Annotated[AsyncSession, Depends(get_session)]
+
 
 class TaskCollector(TaskCollectorInterface):
-    def __init__(self, session: AsyncSession = Depends(get_session)):
+    def __init__(self, session: T_Session):
         logger.info('starting collector')
         self.session = session
 
     async def collect_task_by_id(self, user: User, id_task: int) -> Task:
-        logger.info(
-            f'collecting task with id = {id_task} for user {user.email}'
-        )
+        logger.info(f'collecting task with id = {id_task}')
         task = await self.session.scalar(
             select(Task).where(
                 Task.user_email == user.email, Task.id_task == id_task
@@ -33,8 +35,12 @@ class TaskCollector(TaskCollectorInterface):
     async def collect_task_by_filter(
         self, user: User, filter: FilterSchema
     ) -> list[Task]:
-        logger.info(f'collecting tasks for user {user.email} with filter')
-        filter_sql = select(Task).where(Task.user_email == user.email)
+        logger.info('collecting tasks with filters')
+        filter_sql = (
+            select(Task)
+            .options(selectinload(Task.occurrences))
+            .where(Task.user_email == user.email)
+        )
 
         for campo in filter.model_fields:
             filter_sql = self._make_filter(campo, filter, filter_sql)

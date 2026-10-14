@@ -29,7 +29,7 @@ def verify_password(password: str, hash: str) -> bool:
 
 
 def generate_access_token(data: dict) -> str:
-    logger.info(f'generating access token for user: {data["sub"]}')
+    logger.info('generating access token')
     settings = Settings()  # type: ignore
 
     to_encode = data.copy()
@@ -44,7 +44,7 @@ def generate_access_token(data: dict) -> str:
 
 
 def generate_refresh_token(data: dict) -> str:
-    logger.info(f'generating refresh token for user: {data["sub"]}')
+    logger.info('generating refresh token')
     settings = Settings()  # type: ignore
 
     to_encode = data.copy()
@@ -118,4 +118,5 @@ async def get_user(
     if not user:
         raise HTTPException(HTTPStatus.UNAUTHORIZED, 'invalid token')
 
+    logger.debug('user authentication succeeded')
     return user

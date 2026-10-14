@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from http import HTTPStatus
 from zoneinfo import ZoneInfo
 
@@ -40,6 +40,7 @@ async def test_create_task(
 
 def test_create_full_task(auth_client_alice: TestClient, users, workbenches):
     reminder = datetime.now()
+    occurrence_ref = date.today()
     priority = 10
 
     rsp = auth_client_alice.post(
@@ -54,6 +55,11 @@ def test_create_full_task(auth_client_alice: TestClient, users, workbenches):
             ],
             'workbenches': [1, 2],
             'reminder': reminder.isoformat(),
+            'occurrences': {
+                (occurrence_ref + timedelta(days=-1)).isoformat(): True,
+                (occurrence_ref + timedelta(days=1)).isoformat(): False,
+                (occurrence_ref + timedelta(days=2)).isoformat(): False,
+            },
             'repetition': '0111110',
             'state': 'TODO',
             'priority': priority,
@@ -82,6 +88,18 @@ def test_create_full_task(auth_client_alice: TestClient, users, workbenches):
     assert sorted(data['workbenches']) == [1, 2]
     assert data['reminder'] == reminder.isoformat()
     assert data['repetition'] == '0111110'
+    assert (
+        data['occurrences'][(occurrence_ref + timedelta(days=-1)).isoformat()]
+        is True
+    )
+    assert (
+        data['occurrences'][(occurrence_ref + timedelta(days=1)).isoformat()]
+        is False
+    )
+    assert (
+        data['occurrences'][(occurrence_ref + timedelta(days=2)).isoformat()]
+        is False
+    )
     assert data['state'] == 'TODO'
     assert data['priority'] == priority
 
@@ -136,9 +154,13 @@ def test_get_task_by_id(auth_client_alice: TestClient, tasks):
 
 @pytest.mark.asyncio
 async def test_update_task(
-    auth_client_alice: TestClient, tasks, session: AsyncSession
+    auth_client_alice: TestClient, tasks, occurrences, session: AsyncSession
 ):
     id_test = 1
+    date_occurrence_add = (date.today() + timedelta(days=3)).isoformat()
+    date_occurrence_update = (date.today() + timedelta(days=1)).isoformat()
+    date_occurrence_remove = (date.today() + timedelta(days=-1)).isoformat()
+
     new_data = {
         'title': f'Tarefa {id_test} atualizada',
         'description': 'Descrição atualizada',
@@ -148,6 +170,11 @@ async def test_update_task(
         'workbenches_add': [1],
         'workbenches_remove': [2],
         'workbenches': [1],
+        'occurrences_add': {
+            date_occurrence_add: False,
+        },
+        'occurrences_update': {date_occurrence_update: True},
+        'occurrences_remove': [date_occurrence_remove],
         'repetition': '',
         'priority': 75,
     }
@@ -181,6 +208,14 @@ async def test_update_task(
     new_data.pop('tags_remove')
     new_data.pop('workbenches_add')
     new_data.pop('workbenches_remove')
+    new_data.pop('occurrences_add')
+    new_data.pop('occurrences_update')
+    new_data.pop('occurrences_remove')
+    new_data['occurrences'] = {
+        date_occurrence_update: True,
+        date_occurrence_add: False,
+        occurrences[2]['occurrence_date'].isoformat(): False,
+    }
 
     assert data == new_data
 

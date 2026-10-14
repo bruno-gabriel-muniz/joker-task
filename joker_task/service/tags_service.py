@@ -22,7 +22,7 @@ class TagService(TagServiceInterface):
     async def get_or_create_tags(
         self, user: User, tags: Sequence[TagSchema] | None
     ) -> list[Tag]:
-        logger.info(f'getting or creating tags for user: {user.email}')
+        logger.info('getting or creating tags')
 
         if not tags:
             return []
@@ -34,13 +34,11 @@ class TagService(TagServiceInterface):
 
         result = [await self._get_or_create_tag(user, tag) for tag in tags]
 
-        logger.info(
-            f'got or created {len(result)} tags for user: {user.email}'
-        )
+        logger.info(f'got or created {len(result)} tags')
         return result
 
     async def collect_tag_by_id(self, user: User, id: int) -> Tag:
-        logger.info(f'collecting tag with id = {id} for user {user.email}')
+        logger.info(f'collecting tag with id = {id}')
         tag = await self.session.scalar(
             select(Tag).where(
                 Tag.user_email == user.email,
@@ -54,7 +52,7 @@ class TagService(TagServiceInterface):
         return tag
 
     async def collect_tags(self, user: User) -> Sequence[Tag]:
-        logger.info(f'collecting tags for user {user.email}')
+        logger.info('collecting tags')
         tags = (
             await self.session.scalars(
                 select(Tag).where(Tag.user_email == user.email)
@@ -66,9 +64,7 @@ class TagService(TagServiceInterface):
     async def check_tag_name_exists(
         self, user: User, name: str, id: int
     ) -> None:
-        logger.info(
-            f'checking if tag name "{name}" exists for user {user.email}'
-        )
+        logger.info(f'checking tag name conflict for id = {id}')
         have_conflict = await self.session.scalar(
             select(Tag).where(
                 Tag.id_tag != id,
@@ -87,10 +83,7 @@ class TagService(TagServiceInterface):
         tags_add: Sequence[TagSchema] | None,
         tags_remove: Sequence[TagSchema] | None,
     ) -> None:
-        logger.info(
-            f'updating tags of task with id = {task.id_task} '
-            + f'for user {user.email}'
-        )
+        logger.info(f'updating tags for task {task.id_task}')
         current_tags = {tag.name: tag.color_hex for tag in task.tags}
 
         if tags_add:
@@ -123,9 +116,9 @@ class TagService(TagServiceInterface):
                 )
 
             tag_db = Tag(tag.name, tag.color_hex, user.email, user)
-            logger.debug(f'creating new tag: {tag}')
+            logger.debug('creating new tag')
             self.session.add(tag_db)
         else:
-            logger.debug(f'tag found: {tag}')
+            logger.debug('tag already exists')
 
         return tag_db

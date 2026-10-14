@@ -33,9 +33,7 @@ class ViewService(ViewServiceInterface):
         self.mapper = mapper
 
     async def create_view(self, user: User, view: ViewSchema) -> View:
-        logger.debug(
-            f'Creating view for user {user.email} with name {view.name}'
-        )
+        logger.debug('Creating view')
         await self._find_conflicting(user, view.name)
         view_db = View(
             user_email=user.email,
@@ -54,7 +52,7 @@ class ViewService(ViewServiceInterface):
         return view_db
 
     async def list_views(self, user: User) -> Sequence[View]:
-        logger.debug(f'Listing views for user {user.email}')
+        logger.debug('Listing views')
 
         result = await self.session.scalars(
             select(View)
@@ -65,7 +63,7 @@ class ViewService(ViewServiceInterface):
         return result.all()
 
     async def get_view_by_id(self, user: User, id_view: int) -> View:
-        logger.debug(f'Getting view {id_view} for user {user.email}')
+        logger.debug(f'Getting view {id_view}')
 
         view_db = await self.session.scalar(
             select(View)
@@ -83,7 +81,7 @@ class ViewService(ViewServiceInterface):
         user: User,
         id_view: int,
     ) -> dict[int, list[Task]]:
-        logger.debug(f'Applying view {id_view} for user {user.email}')
+        logger.debug(f'Applying view {id_view}')
 
         view = await self.get_view_by_id(user, id_view)
 
@@ -101,7 +99,7 @@ class ViewService(ViewServiceInterface):
     async def update_view(
         self, user: User, id_view: int, view: ViewUpdate
     ) -> View:
-        logger.debug(f'Updating view {id_view} for user {user.email}')
+        logger.debug(f'Updating view {id_view}')
 
         view_db = await self.get_view_by_id(user, id_view)
 
@@ -121,9 +119,7 @@ class ViewService(ViewServiceInterface):
     async def create_view_filter(
         self, user: User, id_view: int, filter_schema: FilterSchema
     ) -> Filter:
-        logger.debug(
-            f'Creating filter for view {id_view} for user {user.email}'
-        )
+        logger.debug(f'Creating filter for view {id_view}')
 
         view_db = await self.get_view_by_id(user, id_view)
 
@@ -139,10 +135,7 @@ class ViewService(ViewServiceInterface):
         id_filter: int,
         filter_schema: FilterSchema,
     ) -> Filter:
-        logger.debug(
-            f'Updating filter {id_filter} '
-            + f'for view {id_view} for user {user.email}'
-        )
+        logger.debug(f'Updating filter {id_filter} for view {id_view}')
 
         view_db = await self.get_view_by_id(user, id_view)
 
@@ -175,10 +168,7 @@ class ViewService(ViewServiceInterface):
     async def delete_view_filter(
         self, user: User, id_view: int, id_filter: int
     ) -> None:
-        logger.debug(
-            f'Deleting filter {id_filter} '
-            + f'for view {id_view} for user {user.email}'
-        )
+        logger.debug(f'Deleting filter {id_filter} for view {id_view}')
 
         view_db = await self.get_view_by_id(user, id_view)
 
@@ -197,6 +187,7 @@ class ViewService(ViewServiceInterface):
         await self.session.delete(filter_db)
 
     async def delete_view(self, user: User, id_view: int) -> None:
+        logger.debug(f'Deleting view {id_view}')
         view_db = await self.get_view_by_id(user, id_view)
         await self.session.delete(view_db)
 
@@ -231,6 +222,7 @@ class ViewService(ViewServiceInterface):
         )
 
     async def _find_conflicting(self, user: User, name: str) -> None:
+        logger.debug('Checking view name conflict')
         have_conflict = await self.session.scalar(
             select(View).where(
                 View.user_email == user.email, View.name == name
@@ -238,6 +230,7 @@ class ViewService(ViewServiceInterface):
         )
 
         if have_conflict is not None:
+            logger.warning('View name conflict found')
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
                 detail='view with this name already exists',

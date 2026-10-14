@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Sequence
 
 from pydantic import BaseModel, EmailStr, Field
@@ -84,6 +84,7 @@ class TaskSchema(BaseModel):
     workbenches: Sequence[int] = Field(default_factory=list)
     reminder: datetime | None = None
     repetition: str | None = None
+    occurrences: dict[date, bool] = Field(default_factory=dict)
     state: str | None = None
     priority: int = 100
 
@@ -98,6 +99,9 @@ class TaskUpdate(BaseModel):
     workbenches_remove: Sequence[int] | None = None
     reminder: datetime | None = None
     repetition: str | None = None
+    occurrences_update: dict[date, bool] = Field(default_factory=dict)
+    occurrences_add: dict[date, bool] = Field(default_factory=dict)
+    occurrences_remove: Sequence[date] = Field(default_factory=list)
     state: str | None = None
     priority: int = 100
 

@@ -1,10 +1,11 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Sequence
 
 from sqlalchemy import (
     JSON,
     Boolean,
     Column,
+    Date,
     DateTime,
     ForeignKey,
     Integer,
@@ -101,6 +102,9 @@ class Task:
         back_populates='tasks',
         lazy='selectin',
     )
+    occurrences: Mapped[List['TaskOccurrence']] = relationship(
+        back_populates='task', init=False, cascade='all, delete-orphan'
+    )
     priority: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
 
     updated_at: Mapped[datetime] = mapped_column(
@@ -123,9 +127,11 @@ class TaskOccurrence:
         Integer, primary_key=True, init=False, autoincrement=True
     )
 
-    id_task: Mapped[int] = mapped_column(ForeignKey('tasks.id_task'))
-    task: Mapped['Task'] = relationship()
-    occurrence_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    id_task: Mapped[int] = mapped_column(
+        ForeignKey('tasks.id_task', ondelete='CASCADE')
+    )
+    task: Mapped['Task'] = relationship(back_populates='occurrences')
+    occurrence_date: Mapped[date] = mapped_column(Date, nullable=False)
     done: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     updated_at: Mapped[datetime] = mapped_column(

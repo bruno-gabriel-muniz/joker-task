@@ -1,15 +1,26 @@
 from abc import ABC, abstractmethod
+from datetime import date
 from typing import Any, Sequence
 
 from sqlalchemy import Select
 
-from joker_task.db.models import Filter, Tag, Task, User, View, Workbench
+from joker_task.db.models import (
+    Filter,
+    Tag,
+    Task,
+    TaskOccurrence,
+    User,
+    View,
+    Workbench,
+)
 from joker_task.schemas import (
     FilterPublic,
     FilterSchema,
     TagPublic,
     TagSchema,
     TaskPublic,
+    TaskSchema,
+    TaskUpdate,
     UserPublic,
     ViewPublic,
     ViewResult,
@@ -35,6 +46,22 @@ class TaskCollectorInterface(ABC):
 class StrategyMakeFilterInterface(ABC):
     @abstractmethod
     def make(self, cur_filter: Select, values: Any, campo: str) -> Select:
+        pass  # pragma: no cover
+
+
+class TaskServiceInterface(ABC):
+    @abstractmethod
+    async def create_task(
+        self,
+        user: User,
+        task: TaskSchema,
+        tags_db: Sequence[Tag],
+        workbenches_db: Sequence[Workbench],
+    ) -> Task:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    async def update_task(self, task: Task, task_update: TaskUpdate) -> None:
         pass  # pragma: no cover
 
 
@@ -102,6 +129,48 @@ class WorkbenchServiceInterface(ABC):
         pass  # pragma: no cover
 
 
+class OccurrenceServiceInterface(ABC):
+    @abstractmethod
+    async def validate_occurrence_changes(
+        self,
+        task: Task,
+        occurrences_add: dict[date, bool],
+        occurrences_update: dict[date, bool],
+        occurrences_remove: Sequence[date],
+    ) -> None:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    async def create_occurrences_of_task(
+        self,
+        task: Task,
+        occurrences: dict[date, bool],
+    ) -> Sequence[TaskOccurrence]:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    async def get_occurrences_of_task(
+        self, task: Task
+    ) -> Sequence[TaskOccurrence]:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    async def update_occurrences_of_task(
+        self,
+        task: Task,
+        occurrences: dict[date, bool],
+    ) -> None:
+        pass  # pragma: no cover
+
+    @abstractmethod
+    async def remove_occurrences_of_task(
+        self,
+        task: Task,
+        occurrences: Sequence[date],
+    ) -> None:
+        pass  # pragma: no cover
+
+
 class ViewServiceInterface(ABC):
     @abstractmethod
     async def create_view(self, user: User, view_schema: ViewSchema) -> View:
@@ -162,7 +231,9 @@ class MapperInterface(ABC):
 
     @staticmethod
     @abstractmethod
-    def map_task_public(task_db: Task) -> TaskPublic:
+    def map_task_public(
+        task_db: Task, occurrences: Sequence[TaskOccurrence] | None = None
+    ) -> TaskPublic:
         pass  # pragma: no cover
 
     @staticmethod

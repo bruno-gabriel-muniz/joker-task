@@ -18,7 +18,7 @@ logger.add(
     level='ERROR',
     format='\n<green>{time}</green> | {level} | {message}',
 )
-logger.add('app.log', level='DEBUG', rotation='1 MB')
+logger.add('app.log', level='DEBUG', rotation='1 MB', retention='14 days')
 
 
 logger.info('starting api...')
