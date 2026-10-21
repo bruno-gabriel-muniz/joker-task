@@ -44,21 +44,32 @@ class OccurrenceService(OccurrenceServiceInterface):
                 'occurrence dates conflict in request',
             )
 
-        if add_dates:
-            existing_date = await self.session.scalar(
-                select(TaskOccurrence.occurrence_date).where(
-                    TaskOccurrence.id_task == task.id_task,
-                    TaskOccurrence.occurrence_date.in_(add_dates),
-                )
-            )
-            if existing_date is not None:
-                logger.warning(
-                    f'occurrence date already exists for task {task.id_task}'
-                )
-                raise HTTPException(
-                    HTTPStatus.CONFLICT,
-                    'occurrence date already exists',
-                )
+        await self._verify_previous_occurrences(
+            task,
+            list(add_dates),
+            0,
+            f'occurrence date already exists for task {task.id_task}',
+            'occurrence date already exists',
+            http_status=HTTPStatus.CONFLICT,
+        )
+
+        await self._verify_previous_occurrences(
+            task,
+            list(update_dates),
+            len(update_dates),
+            f'occurrence date does not exist for task {task.id_task}',
+            'occurrence date does not exist',
+            http_status=HTTPStatus.NOT_FOUND,
+        )
+
+        await self._verify_previous_occurrences(
+            task,
+            list(remove_dates),
+            len(remove_dates),
+            f'occurrence date does not exist for task {task.id_task}',
+            'occurrence date does not exist',
+            http_status=HTTPStatus.NOT_FOUND,
+        )
 
     @staticmethod
     async def create_occurrences_of_task(
@@ -135,3 +146,28 @@ class OccurrenceService(OccurrenceServiceInterface):
                 )
             )
         ).all()
+
+    async def _verify_previous_occurrences(  # noqa: PLR0913
+        self,
+        task: Task,
+        occurrences_date: Sequence[date],
+        quant_spec: int,
+        message_log: str,
+        message_error: str,
+        *,
+        http_status: HTTPStatus = HTTPStatus.BAD_REQUEST,
+    ) -> None:
+        logger.debug(
+            f'verifying {len(occurrences_date)} previous occurrence dates '
+            + f'for task {task.id_task}'
+        )
+        occurrences_db = await self._get_occurrence_of_task_by_date(
+            task, occurrences_date
+        )
+
+        if len(occurrences_db) != quant_spec:
+            logger.warning(message_log)
+            raise HTTPException(
+                http_status,
+                message_error,
+            )
