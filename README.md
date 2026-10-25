@@ -19,10 +19,7 @@ Em vez de impor regras, o sistema fornece estruturas mínimas que podem ser comb
 
 O domínio do sistema é organizado em três conceitos centrais, além dos usuários:
 
-- **Tasks**  ￼
-Sugestões Embutidas
-Habilitado
-
+- **Tasks**
   Um único tipo de tarefa, capaz de representar diferentes estratégias de organização, como:
   - lembretes
   - quadros Kanban
@@ -90,7 +87,6 @@ O projeto está em evolução contínua, com foco em **qualidade de código**, *
 ```
 git clone https://github.com/bruno-gabriel-muniz/joker-task
 ```
-class TaskOccurrence:
 #### Como instalar as dependências?
 ```
 poetry install
@@ -175,92 +171,104 @@ poetry run alembic upgrade head
 
 ```mermaid
 erDiagram
-
-
     USERS {
         string email
-        string password_hash
+        string username
+        string password
         datetime updated_at
         datetime created_at
     }
 
     TASKS {
-        int id
+        int id_task
+        string user_email
         string title
-        text description
+        string description
         boolean done
-        json repetition
-        json history
-        int workbench_id
+        datetime reminder
+        string repetition
+        string state
+        int priority
         datetime updated_at
         datetime created_at
     }
 
-    TASKS_OCCURRENCES {
-        int id_task_occurence
-        int task_id
+    TASK_OCCURRENCES {
+        int id_task_occurrence
+        int id_task
         date occurrence_date
         boolean done
         datetime updated_at
         datetime created_at
     }
 
+    TAGS {
+        int id_tag
+        string name
+        string color_hex
+        string user_email
+        datetime updated_at
+        datetime created_at
+    }
 
     WORKBENCHS {
-        int id
+        int id_workbench
+        string user_email
         string name
+        json columns
         datetime updated_at
         datetime created_at
-    }
-
-    TASK_WORKBENCHS {
-        int task_id
-        int workbench_id
-    }
-
-    TAGS {
-        int id
-        string name
-        string color
-        datetime updated_at
-        datetime created_at
-    }
-
-    TASK_TAGS {
-        int task_id
-        int tag_id
     }
 
     VIEWS {
-        int id
+        int id_view
+        string user_email
         string name
-        int workbench_id
         datetime updated_at
         datetime created_at
     }
 
-    VIEW_FILTERS {
-        int id
-        int view_id
-        json filters
+    FILTERS {
+        int id_filter
+        int id_view
+        string title
+        string description
+        boolean done
+        json tags
+        json reminder
+        string repetition
+        json state
+        json priority
+        int offset
+        int limit
         datetime updated_at
         datetime created_at
+    }
+
+    TASK_TAG {
+        int id_task
+        int id_tag
+    }
+
+    TASK_WORKBENCH {
+        int id_task
+        int id_workbench
     }
 
     USERS ||--o{ TASKS : owns
     USERS ||--o{ TAGS : owns
     USERS ||--o{ WORKBENCHS : owns
     USERS ||--o{ VIEWS : owns
-    
-    TASKS ||--o{ TASKS_OCCURRENCES : has
 
-    TASKS ||--o{ TASK_TAGS : has
-    TAGS ||--o{ TASK_TAGS : tagged
+    TASKS ||--o{ TASK_OCCURRENCES : has
 
-    TASKS ||--o{ TASK_WORKBENCHS : has
-    WORKBENCHS ||--o{ TASK_WORKBENCHS : contains
+    TASKS ||--o{ TASK_TAG : has
+    TAGS ||--o{ TASK_TAG : tagged
 
-    VIEWS ||--o{ VIEW_FILTERS : has
+    TASKS ||--o{ TASK_WORKBENCH : has
+    WORKBENCHS ||--o{ TASK_WORKBENCH : contains
+
+    VIEWS ||--o{ FILTERS : has
 ```
 
 ---
