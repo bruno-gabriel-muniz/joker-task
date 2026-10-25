@@ -4,6 +4,21 @@ from http import HTTPStatus
 from fastapi.testclient import TestClient
 
 
+def test_get_task_occurrences(
+    auth_client_alice: TestClient, tasks, occurrences
+):
+    response = auth_client_alice.get('/tasks/1/')
+    assert response.status_code == HTTPStatus.OK
+
+    data = response.json()
+    assert len(data['occurrences']) == len([
+        o for o in occurrences if o['id_task'] == 1
+    ])
+    assert (date.today() + timedelta(days=1)).isoformat() in data[
+        'occurrences'
+    ]
+
+
 def test_update_task_occurrences_rejects_invalid_date(
     auth_client_alice: TestClient, tasks
 ):

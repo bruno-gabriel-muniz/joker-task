@@ -19,7 +19,10 @@ Em vez de impor regras, o sistema fornece estruturas mínimas que podem ser comb
 
 O domínio do sistema é organizado em três conceitos centrais, além dos usuários:
 
-- **Tasks**  
+- **Tasks**  ￼
+Sugestões Embutidas
+Habilitado
+
   Um único tipo de tarefa, capaz de representar diferentes estratégias de organização, como:
   - lembretes
   - quadros Kanban
@@ -87,7 +90,7 @@ O projeto está em evolução contínua, com foco em **qualidade de código**, *
 ```
 git clone https://github.com/bruno-gabriel-muniz/joker-task
 ```
-
+class TaskOccurrence:
 #### Como instalar as dependências?
 ```
 poetry install
@@ -145,9 +148,11 @@ poetry run alembic upgrade head
 │   │   ├── dependencies.py
 │   │   ├── make_filters.py
 │   │   ├── mapper.py
+│   │   ├── occurrence_service.py
 │   │   ├── security.py
 │   │   ├── tags_service.py
 │   │   ├── task_collector.py
+│   │   ├── task_service.py
 │   │   ├── view_service.py
 │   │   └── workbench_service.py
 │   ├── __init__.py
@@ -175,6 +180,7 @@ erDiagram
     USERS {
         string email
         string password_hash
+        datetime updated_at
         datetime created_at
     }
 
@@ -186,12 +192,24 @@ erDiagram
         json repetition
         json history
         int workbench_id
+        datetime updated_at
         datetime created_at
     }
+
+    TASKS_OCCURRENCES {
+        int id_task_occurence
+        int task_id
+        date occurrence_date
+        boolean done
+        datetime updated_at
+        datetime created_at
+    }
+
 
     WORKBENCHS {
         int id
         string name
+        datetime updated_at
         datetime created_at
     }
 
@@ -204,6 +222,7 @@ erDiagram
         int id
         string name
         string color
+        datetime updated_at
         datetime created_at
     }
 
@@ -216,6 +235,7 @@ erDiagram
         int id
         string name
         int workbench_id
+        datetime updated_at
         datetime created_at
     }
 
@@ -223,12 +243,16 @@ erDiagram
         int id
         int view_id
         json filters
+        datetime updated_at
+        datetime created_at
     }
 
     USERS ||--o{ TASKS : owns
     USERS ||--o{ TAGS : owns
     USERS ||--o{ WORKBENCHS : owns
     USERS ||--o{ VIEWS : owns
+    
+    TASKS ||--o{ TASKS_OCCURRENCES : has
 
     TASKS ||--o{ TASK_TAGS : has
     TAGS ||--o{ TASK_TAGS : tagged
@@ -249,7 +273,6 @@ config:
   theme: dark
 ---
 flowchart TD
-    User[Cliente / Usuário] --> Router
 
     subgraph Router Camada HTTP FastAPI Routers
         AuthRouter[auth]
@@ -258,41 +281,64 @@ flowchart TD
         WorkbenchRouter[workbenches]
         ViewRouter[views]
     end
-    Router --> Services
 
     subgraph Services Application Services
         Security[security]
         TaskCollector[task_collector]
+        TaskService[task_service]
         TagService[tags_service]
         WorkbenchService[workbench_service]
         ViewService[view_service]
         FilterFactory[make_filters]
+        OccurrenceService[occurrence_service]
     end
     AuthRouter --> Security
 
     TaskRouter --> TaskCollector
+    TaskRouter --> TaskService
     TaskRouter --> TagService
     TaskRouter --> WorkbenchService
+    TaskRouter --> OccurrenceService
 
     TagRouter --> TagService
     WorkbenchRouter --> WorkbenchService
     ViewRouter --> ViewService
 
     TaskCollector --> FilterFactory
-    Services --> ORM
 
-    subgraph ORM Camada de Persistência
+    subgraph Mapper
         Models[SQLAlchemy Models]
-        DB[(Database)]
+        Schemas[Pydantic Schemas]
+    end
+    
+    subgraph ORM
+        Database[Database]
+        SQLAlchemy[SQLAlchemy ORM]
     end
 
-    Models --> DB
+    Database --> SQLAlchemy --> Models --> Schemas
+```
 
-    subgraph Mapper Mapper
-        PublicSchemas[Public Schemas DTOs]
-    end
+---
 
-    Router --> Mapper
+## Fluxo de Chamadas
+
+```mermaid
+---
+config:
+  theme: dark
+---
+flowchart TD
+    User[User] -->|1| Request[Request]
+    Request -->|2| Router[Router]
+    Router -->|3| Services[Services]
+    Services -->|4| ORM_fc[ORM]
+    ORM_fc -->|5| Services[Services]
+    Services -->|6| Router[Router]
+    Router -->|7| Mapper_fc[Mapper]
+    Mapper_fc -->|8| Router[Router]
+    Router -->|9| Response[Response]
+    Response -->|10| User[User]
 ```
 ---
 
@@ -304,9 +350,13 @@ flowchart TD
 
 - **tasks (router)**: Camada de entrada HTTP. Orquestra o fluxo da requisição.
 
+- **occurrence_service**: Gerencia ocorrências de tarefas, como repetições e histórico.
+
 - **task_collector**: Responsável por buscar tarefas no banco, aplicando filtros dinâmicos usando *Strategy* e o **make_filters**.
 
 - **make_filters**: Camada que traduz os filtros para expressão SQL, utilizando o padrão *Factory*
+
+- **task_service**: Gerencia as funções básicas das tasks.
 
 - **tags_service**: Gerencia criação, reutilização, verificação de conflitos e associação de tags com as tasks.
 
@@ -315,17 +365,6 @@ flowchart TD
 - **view_service**: Gerencia criação, reutilização, verificação de conflitos e associação de views com as tasks.
 
 - **mapper**: Converte modelos ORM em schemas públicos, desacoplando banco de dados da API.
-
----
-
-### Fluxo de chamadas
-
-- `User → auth → security`
-- `User → tasks → task_collector → mapper`
-- `User → tasks → (tags_service, task_collector, workbench_service) → mapper`
-- `User → tags → tags_service → mapper`
-- `User → workbenches → workbench_service → mapper`
-- `User → views → view_service → (task_collector) → mapper`
 
 ---
 
@@ -339,6 +378,7 @@ flowchart TD
 - [X] Filtros mais avançados (views reutilizáveis)
 - [X] Evolução do domínio de Tags
 - [X] Dockerizar o backend
+- [X] Implementar sistema para o rastreamento da ocorrência de tarefas
 - [ ] Implementação do sistema de repetição de tarefas
 - [ ] Melhorar documentação de decisões arquiteturais
 - [ ] Refatorações e melhorias arquiteturais contínuas

@@ -59,7 +59,9 @@ lint = 'ruff check'
 format = { shell = 'ruff format && ruff check --fix' }
 app = 'fastapi dev joker_task/app.py'
 test = { sequence = ['format', 'test-suite', 'coverage-report'] }
+test-lf = { sequence = ['format', 'test-suite-lf'] }
 test-suite = 'pytest -s -x --cov=joker_task -vv'
+test-suite-lf = 'pytest -s -x --lf'
 coverage-report = 'coverage html'
 
 [tool.poe] 
