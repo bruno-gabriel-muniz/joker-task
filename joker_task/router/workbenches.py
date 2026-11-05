@@ -2,7 +2,6 @@ from http import HTTPStatus
 
 from fastapi import APIRouter
 
-from joker_task.db.models import Workbench
 from joker_task.schemas import (
     WorkbenchPublic,
     WorkbenchSchema,
@@ -29,15 +28,7 @@ async def create_workbench(
     session: T_Session,
     mapper: T_Mapper,
 ):
-    await workbench_srv.check_workbench_name_exists(user, workbench.name)
-
-    workbench_db = Workbench(
-        user_email=user.email,
-        user=user,
-        name=workbench.name,
-        columns=sorted(workbench.columns),
-    )
-    session.add(workbench_db)
+    workbench_db = await workbench_srv.create_workbench(workbench, user)
     await session.commit()
     await session.refresh(workbench_db)
 

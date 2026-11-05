@@ -28,6 +28,7 @@ from joker_task.schemas import (
     ViewSoft,
     ViewUpdate,
     WorkbenchPublic,
+    WorkbenchSchema,
 )
 
 
@@ -98,6 +99,12 @@ class TagServiceInterface(ABC):
 
 
 class WorkbenchServiceInterface(ABC):
+    @abstractmethod
+    async def create_workbench(
+        self, workbench: WorkbenchSchema, user: User
+    ) -> Workbench:
+        pass  # pragma: no cover
+
     @abstractmethod
     async def collect_workbench_by_id(
         self, user: User, id_workbench: int

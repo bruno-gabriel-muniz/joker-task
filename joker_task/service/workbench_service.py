@@ -10,6 +10,7 @@ from sqlalchemy.orm import selectinload
 from joker_task.db.database import get_session
 from joker_task.db.models import Task, User, Workbench
 from joker_task.interfaces.interfaces import WorkbenchServiceInterface
+from joker_task.schemas import WorkbenchSchema
 
 T_Session = Annotated[AsyncSession, Depends(get_session)]
 
@@ -17,6 +18,22 @@ T_Session = Annotated[AsyncSession, Depends(get_session)]
 class WorkbenchService(WorkbenchServiceInterface):
     def __init__(self, session: T_Session):
         self.session = session
+
+    async def create_workbench(
+        self, workbench: WorkbenchSchema, user: User
+    ) -> Workbench:
+        await self._check_workbench_name_exists(user, workbench.name)
+
+        logger.info('creating workbench')
+        workbench_db = Workbench(
+            user_email=user.email,
+            user=user,
+            name=workbench.name,
+            columns=sorted(workbench.columns),
+        )
+        self.session.add(workbench_db)
+
+        return workbench_db
 
     async def collect_workbench_by_id(
         self, user: User, id_workbench: int
@@ -85,7 +102,9 @@ class WorkbenchService(WorkbenchServiceInterface):
 
         return result.scalars().all()
 
-    async def check_workbench_name_exists(self, user: User, name: str) -> None:
+    async def _check_workbench_name_exists(
+        self, user: User, name: str
+    ) -> None:
         logger.info('checking workbench name conflict')
         have_conflict = await self.session.scalar(
             select(Workbench).where(
