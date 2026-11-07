@@ -22,7 +22,7 @@ class WorkbenchService(WorkbenchServiceInterface):
     async def create_workbench(
         self, workbench: WorkbenchSchema, user: User
     ) -> Workbench:
-        await self._check_workbench_name_exists(user, workbench.name)
+        await self.check_workbench_name_exists(user, workbench.name)
 
         logger.info('creating workbench')
         workbench_db = Workbench(
@@ -102,9 +102,7 @@ class WorkbenchService(WorkbenchServiceInterface):
 
         return result.scalars().all()
 
-    async def _check_workbench_name_exists(
-        self, user: User, name: str
-    ) -> None:
+    async def check_workbench_name_exists(self, user: User, name: str) -> None:
         logger.info('checking workbench name conflict')
         have_conflict = await self.session.scalar(
             select(Workbench).where(
