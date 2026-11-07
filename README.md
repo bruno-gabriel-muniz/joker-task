@@ -56,8 +56,9 @@ O projeto está em evolução contínua, com foco em **qualidade de código**, *
 
 - [Tecnologias Utilizadas](#tecnologias-utilizadas)
 - [Como Começar?](#como-começar)
+- [Uso de IA no Desenvolvimento](#uso-de-ia-no-desenvolvimento)
 - [Estrutura do Projeto](#estrutura-do-projeto)
-- [Database Schema](#database-schema)
+- [Esquema do Banco de Dados](#esquema-do-banco-de-dados)
 - [Arquitetura](#arquitetura)
 - [Próximos Passos](#próximos-passos)
 
@@ -78,9 +79,9 @@ O projeto está em evolução contínua, com foco em **qualidade de código**, *
 
 ### Backend
 
-**Requisitos**: Python 3.14t-dev e Poetry.
+**Requisitos**: Python 3.14t-dev ou superior e Poetry. O Docker Compose é opcional.
 
-> O projeto é disponibilizado como uma API, com documentação interativa disponível em /docs.
+> O projeto é disponibilizado como uma API. Após iniciá-la, a documentação interativa fica disponível em `http://localhost:8000/docs`.
 
 
 #### Como baixar o projeto?
@@ -97,7 +98,7 @@ poetry self add 'poethepoet[poetry_plugin]'
 ```
 cp joker_task/.env.example joker_task/.env
 ```
-Crie a sua própria chave secreta para o JWT.
+Antes de iniciar a API, substitua `SECRET_KEY='YourSecretKey'` por uma chave secreta própria.
 
 
 #### Como rodar o projeto?
@@ -111,7 +112,7 @@ poetry app
 poetry test
 ```
 
-#### Como usar os linters?
+#### Como formatar e executar os linters?
 
 ```
 poetry format
@@ -120,9 +121,19 @@ poetry format
 #### Rodando com Docker
 ```
 docker compose up --build -d
-poetry run alembic upgrade head
+docker compose exec api alembic upgrade head
 ```
 ---
+
+## Uso de IA no Desenvolvimento Desse Projeto
+
+O uso de ferramentas de IA nesse projeto tem o objetivo de explorar soluções mais eficientes, aumentar a confiabilidade do uso de IA no desenvolvimento de software e adquirir experiência prática com essas ferramentas.
+
+As sugestões geradas são avaliadas de acordo com as interfaces e convenções do projeto e verificadas com testes e ferramentas de formatação. A IA auxilia o desenvolvimento, mas não substitui a revisão das mudanças nem a validação do código.
+
+### Configuração do `AGENTS.md`
+
+O AGENTS.md foi configurado para, além de passar os comandos básicos do projeto aos agents, criar um fluxo de desenvolvimento em que 100% de cobertura de código seja mantida enquanto a IA segue o que está definido nas interfaces, facilitando o gerenciamento da arquitetura e a expansão dela com auxílio de agentes com maior contexto de mundo e da intensão do projeto, do que de programação necessariamente.
 
 ## Estrutura do Projeto
 
@@ -159,6 +170,7 @@ poetry run alembic upgrade head
 │   └── ...
 ├── tests
 │   └── ...
+├── AGENTS.md
 ├── poetry.lock
 ├── pyproject.toml
 ├── docker-compose.yml
@@ -167,7 +179,7 @@ poetry run alembic upgrade head
 ```
 ---
 
-## Database Schema
+## Esquema do Banco de Dados
 
 ```mermaid
 erDiagram
@@ -282,7 +294,7 @@ config:
 ---
 flowchart TD
 
-    subgraph Router Camada HTTP FastAPI Routers
+    subgraph Router["Camada HTTP (routers FastAPI)"]
         AuthRouter[auth]
         TaskRouter[tasks]
         TagRouter[tags]
@@ -290,7 +302,7 @@ flowchart TD
         ViewRouter[views]
     end
 
-    subgraph Services Application Services
+    subgraph Services["Serviços da aplicação"]
         Security[security]
         TaskCollector[task_collector]
         TaskService[task_service]
@@ -314,12 +326,12 @@ flowchart TD
 
     TaskCollector --> FilterFactory
 
-    subgraph Mapper
+    subgraph Mapper["Mapeamento"]
         Models[SQLAlchemy Models]
         Schemas[Pydantic Schemas]
     end
     
-    subgraph ORM
+    subgraph ORM["Persistência"]
         Database[Database]
         SQLAlchemy[SQLAlchemy ORM]
     end
@@ -329,7 +341,7 @@ flowchart TD
 
 ---
 
-## Fluxo de Chamadas
+## Fluxo de Requisição
 
 ```mermaid
 ---
@@ -337,16 +349,16 @@ config:
   theme: dark
 ---
 flowchart TD
-    User[User] -->|1| Request[Request]
-    Request -->|2| Router[Router]
-    Router -->|3| Services[Services]
-    Services -->|4| ORM_fc[ORM]
-    ORM_fc -->|5| Services[Services]
-    Services -->|6| Router[Router]
-    Router -->|7| Mapper_fc[Mapper]
-    Mapper_fc -->|8| Router[Router]
-    Router -->|9| Response[Response]
-    Response -->|10| User[User]
+    User[Usuário] -->|1| Request[Requisição]
+    Request -->|2| Router[Roteador]
+    Router -->|3| Services[Serviços]
+    Services -->|4| ORM[ORM]
+    ORM -->|5| Services
+    Services -->|6| Router
+    Router -->|7| Mapper[Mapeador]
+    Mapper -->|8| Router
+    Router -->|9| Response[Resposta]
+    Response -->|10| User
 ```
 ---
 
@@ -387,6 +399,7 @@ flowchart TD
 - [X] Evolução do domínio de Tags
 - [X] Dockerizar o backend
 - [X] Implementar sistema para o rastreamento da ocorrência de tarefas
+- [X] Implementar auxilío de desenvolvimento com agentes de IA, para estudar otimização e melhorias de confiabilidade.
 - [ ] Implementação do sistema de repetição de tarefas
 - [ ] Melhorar documentação de decisões arquiteturais
 - [ ] Refatorações e melhorias arquiteturais contínuas

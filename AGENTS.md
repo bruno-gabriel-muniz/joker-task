@@ -1,0 +1,9 @@
+- Install Poetry with `pip install poetry`.
+- Install dependencies with `poetry install`.
+- Run tests with `poetry test`.
+- For new features, add unit and integration tests to maintain 100% code coverage.
+- For changes to existing features, update only the unit and integration tests needed to maintain coverage.
+- Follow the provided interfaces; do not change them without permission. They usually define the task and expected output.
+- If you see a better implementation or an interface improvement, discuss it first. Do not change interfaces without approval.
+- Follow Conventional Commits. Use lowercase and a scope in parentheses; omit the trailing period. Example: `chore(agents): config agents.md`.
+- Follow the project's formatting style. Run `poetry format` before submitting a PR; `poetry test` also formats the code.
