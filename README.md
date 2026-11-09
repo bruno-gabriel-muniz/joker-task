@@ -38,91 +38,35 @@ O domínio do sistema é organizado em três conceitos centrais, além dos usuá
 
 ## Status atual
 
+O JokerTask está em desenvolvimento ativo, com foco na construção de uma API de gerenciamento de tarefas flexível, modular e independente de metodologias específicas de produtividade.
+
 Atualmente, o projeto conta com:
 
-- autenticação e autorização
-- CRUD de tarefas e tags por usuário
-- filtragem dinâmica de tarefas
-- associação de tarefas via workbenches
-- views reutilizáveis
-- arquitetura modular com separação clara de responsabilidades
-- testes automatizados com cobertura
+- **Autenticação e autorização:** gerenciamento de usuários e autenticação baseada em JWT.
+- **Gerenciamento de tarefas:** operações CRUD, prioridades, estados, lembretes e associações com tags e workbenches.
+- **Ocorrências de tarefas:** registro, consulta, atualização e remoção de ocorrências individuais, permitindo acompanhar a execução de tarefas em diferentes datas.
+- **Organização flexível:** workbenches e views com filtros reutilizáveis para diferentes formas de organização.
+- **Arquitetura modular:** separação entre routers, serviços, interfaces, modelos ORM e schemas públicos.
+- **Persistência:** SQLAlchemy assíncrono e Alembic para gerenciamento do banco de dados.
+- **Qualidade e automação:** testes automatizados com Pytest, análise e formatação com Ruff, Docker e integração com GitHub Actions.
+- **Desenvolvimento assistido por IA:** instruções em `AGENTS.md` para orientar agentes no respeito às interfaces, convenções e testes do projeto.
 
-O projeto está em evolução contínua, com foco em **qualidade de código**, **testabilidade** e **clareza arquitetural**.
+O desenvolvimento atual está direcionado à implementação do **sistema de repetição automática de tarefas**, utilizando a estrutura de ocorrências já existente.
+
+O projeto prioriza a qualidade do código, a testabilidade, a clareza arquitetural e a evolução incremental de suas funcionalidades.
 
 ---
 
 ## Sumário
 
-- [Tecnologias Utilizadas](#tecnologias-utilizadas)
-- [Como Começar?](#como-começar)
-- [Uso de IA no Desenvolvimento](#uso-de-ia-no-desenvolvimento)
-- [Estrutura do Projeto](#estrutura-do-projeto)
+- [Uso de IA no Desenvolvimento](#uso-de-ia-no-desenvolvimento-desse-projeto)
 - [Esquema do Banco de Dados](#esquema-do-banco-de-dados)
 - [Arquitetura](#arquitetura)
+- [Tecnologias Utilizadas](#tecnologias-utilizadas)
+- [Estrutura do Projeto](#estrutura-do-projeto)
+- [Como Começar?](#como-começar)
 - [Próximos Passos](#próximos-passos)
 
----
-
-## Tecnologias Utilizadas
-
-- **Python**
-- **FastAPI**
-- **SQLAlchemy (async)**
-- **Alembic**
-- **Pytest**
-- **Docker**
-
----
-
-## Como Começar?
-
-### Backend
-
-**Requisitos**: Python 3.14t-dev ou superior e Poetry. O Docker Compose é opcional.
-
-> O projeto é disponibilizado como uma API. Após iniciá-la, a documentação interativa fica disponível em `http://localhost:8000/docs`.
-
-
-#### Como baixar o projeto?
-```
-git clone https://github.com/bruno-gabriel-muniz/joker-task
-```
-#### Como instalar as dependências?
-```
-poetry install
-poetry self add 'poethepoet[poetry_plugin]'
-```
-
-#### Como configurar as variáveis de ambiente?
-```
-cp joker_task/.env.example joker_task/.env
-```
-Antes de iniciar a API, substitua `SECRET_KEY='YourSecretKey'` por uma chave secreta própria.
-
-
-#### Como rodar o projeto?
-```
-poetry run alembic upgrade head
-poetry app
-```
-
-#### Como rodar os testes?
-```
-poetry test
-```
-
-#### Como formatar e executar os linters?
-
-```
-poetry format
-```
-
-#### Rodando com Docker
-```
-docker compose up --build -d
-docker compose exec api alembic upgrade head
-```
 ---
 
 ## Uso de IA no Desenvolvimento Desse Projeto
@@ -135,48 +79,6 @@ As sugestões geradas são avaliadas de acordo com as interfaces e convenções 
 
 O AGENTS.md foi configurado para, além de passar os comandos básicos do projeto aos agents, criar um fluxo de desenvolvimento em que 100% de cobertura de código seja mantida enquanto a IA segue o que está definido nas interfaces, facilitando o gerenciamento da arquitetura e a expansão dela com auxílio de agentes com maior contexto de mundo e da intensão do projeto, do que de programação necessariamente.
 
-## Estrutura do Projeto
-
-```
-.
-├── joker_task
-│   ├── db
-│   │   ├── database.py
-│   │   └── models.py
-│   ├── interfaces
-│   │   └── interfaces.py
-│   ├── router
-│   │   ├── auth.py
-│   │   ├── tags.py
-│   │   ├── tasks.py
-│   │   ├── views.py
-│   │   └── workbenches.py
-│   ├── service
-│   │   ├── dependencies.py
-│   │   ├── make_filters.py
-│   │   ├── mapper.py
-│   │   ├── occurrence_service.py
-│   │   ├── security.py
-│   │   ├── tags_service.py
-│   │   ├── task_collector.py
-│   │   ├── task_service.py
-│   │   ├── view_service.py
-│   │   └── workbench_service.py
-│   ├── __init__.py
-│   ├── app.py
-│   ├── schemas.py
-│   └── settings.py
-├── migrations
-│   └── ...
-├── tests
-│   └── ...
-├── AGENTS.md
-├── poetry.lock
-├── pyproject.toml
-├── docker-compose.yml
-├── LICENSE
-└── README.md
-```
 ---
 
 ## Esquema do Banco de Dados
@@ -386,6 +288,111 @@ flowchart TD
 
 - **mapper**: Converte modelos ORM em schemas públicos, desacoplando banco de dados da API.
 
+---
+
+## Tecnologias Utilizadas
+
+- **Python**
+- **FastAPI**
+- **SQLAlchemy (async)**
+- **Alembic**
+- **Pytest**
+- **Docker**
+
+---
+
+## Estrutura do Projeto
+
+```
+.
+├── joker_task
+│   ├── db
+│   │   ├── database.py
+│   │   └── models.py
+│   ├── interfaces
+│   │   └── interfaces.py
+│   ├── router
+│   │   ├── auth.py
+│   │   ├── tags.py
+│   │   ├── tasks.py
+│   │   ├── views.py
+│   │   └── workbenches.py
+│   ├── service
+│   │   ├── dependencies.py
+│   │   ├── make_filters.py
+│   │   ├── mapper.py
+│   │   ├── occurrence_service.py
+│   │   ├── security.py
+│   │   ├── tags_service.py
+│   │   ├── task_collector.py
+│   │   ├── task_service.py
+│   │   ├── view_service.py
+│   │   └── workbench_service.py
+│   ├── __init__.py
+│   ├── app.py
+│   ├── schemas.py
+│   └── settings.py
+├── migrations
+│   └── ...
+├── tests
+│   └── ...
+├── AGENTS.md
+├── poetry.lock
+├── pyproject.toml
+├── docker-compose.yml
+├── LICENSE
+└── README.md
+```
+---
+
+## Como Começar?
+
+### Backend
+
+**Requisitos**: Python 3.13 ou superior (anterior à versão 4.0) e Poetry. O Docker Compose é opcional.
+
+> O projeto é disponibilizado como uma API. Após iniciá-la, a documentação interativa fica disponível em `http://localhost:8000/docs`.
+
+
+#### Como baixar o projeto?
+```
+git clone https://github.com/bruno-gabriel-muniz/joker-task
+```
+#### Como instalar as dependências?
+```
+poetry install
+poetry self add 'poethepoet[poetry_plugin]'
+```
+
+#### Como configurar as variáveis de ambiente?
+```
+cp joker_task/.env.example joker_task/.env
+```
+Antes de iniciar a API, substitua `SECRET_KEY='YourSecretKey'` por uma chave secreta própria.
+
+
+#### Como rodar o projeto?
+```
+poetry run alembic upgrade head
+poetry app
+```
+
+#### Como rodar os testes?
+```
+poetry test
+```
+
+#### Como formatar e executar os linters?
+
+```
+poetry format
+```
+
+#### Rodando com Docker
+```
+docker compose up --build -d
+docker compose exec api alembic upgrade head
+```
 ---
 
 ## Próximos Passos

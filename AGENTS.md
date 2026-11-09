@@ -4,6 +4,7 @@
 - For changes to existing features, update only the unit and integration tests needed to maintain coverage.
 - Follow the provided interfaces; do not change them without permission. They usually define the task and expected output.
 - If you see a better implementation or an interface improvement, discuss it first. Do not change interfaces without approval.
-- Follow Conventional Commits. Use lowercase, a scope in parentheses; omit the trailing period and make the commit message in English. Example: `chore(agents): config agents.md`.
-- Add version tags according to [Semantic Versioning](https://semver.org/).
+- Follow Conventional Commits. Use lowercase, a scope in parentheses; omit the trailing period and make the commit message in English, being as concise as possible. Example: `chore(agents): config agents.md`.
+- Add version tags, following [Semantic Versioning](https://semver.org/), only to commits that modify functionality or refactor the code itself.
 - Follow the project's formatting style. Run `poetry format` before submitting a PR; `poetry test` also formats the code.
+- There is always a push with --tags, so that the CI can run if necessary.
